@@ -7,12 +7,29 @@ export const glassType = "magnifying";
 // Polar Logo
 var alpha = 30; // degrees
 
+
+// Ring vertex mapping:
+// (outer layer - top)
+//  1           3
+// +-----------+
+// |           |            5            6
+// |           |            +------------+
+// |           |            |            |
+// |           |            |            |
+// |           |            |            |
+// |0          |2           |            |
+// +-----------+            |            |
+// (inner layer -bottom )   |4           |7
+//                          +------------+
+//
+
 function ring() {
     const purple = new THREE.Color( 0xff00ff );
 
     var ring_geom = new THREE.Geometry();
 
     const segments = 20;
+    const depth = 1;
 
     const x_vals = [];
     const y_vals = [];
@@ -31,27 +48,32 @@ function ring() {
 
         ring_geom.vertices.push(V3(x_inner, y_inner, 0));
         ring_geom.vertices.push(V3(x_outer, y_outer, 0));
+        ring_geom.vertices.push(V3(x_inner, y_inner, depth));
+        ring_geom.vertices.push(V3(x_outer, y_outer, depth));
     }
 
     for (let s = 0; s < segments; s++) {
+        const i = s * 4;
         function wrap(index) {
-            return index % (segments* 2);
+            return index % (segments * 4);
         }
-        const start_vert_index = s * 2;
-        ring_geom.faces.push(new THREE.Face3(
-            wrap(start_vert_index),
-            wrap(start_vert_index + 1),
-            wrap(start_vert_index + 3),
-            null,
-            purple
-            ));
-        ring_geom.faces.push(new THREE.Face3(
-            wrap(start_vert_index),
-            wrap(start_vert_index + 3),
-            wrap(start_vert_index + 2),
-            null,
-            purple
-            ));
+        function face(a, b, c) {
+            return new THREE.Face3(
+                wrap(i + a),
+                wrap(i + b),
+                wrap(i + c),
+                null,
+                purple
+            )
+        }
+        ring_geom.faces.push(face(0, 5, 1));
+        ring_geom.faces.push(face(0, 4, 5));
+        ring_geom.faces.push(face(1, 7, 3));
+        ring_geom.faces.push(face(1, 5, 7));
+        ring_geom.faces.push(face(2, 3, 7));
+        ring_geom.faces.push(face(2, 7, 6));
+        ring_geom.faces.push(face(0, 2, 6));
+        ring_geom.faces.push(face(0, 6, 4));
     }
     return ring_geom;
 }

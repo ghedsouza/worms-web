@@ -35,7 +35,7 @@ function run() {
     // the camera starts at 0,0,0 so pull it back
     camera.position.z = 10;
     // camera.position.x = 1;
-    camera.position.y = 1;
+    camera.position.y = 0;
 
     // start the renderer
     renderer.setSize(WIDTH, HEIGHT);
