@@ -2,11 +2,10 @@ import * as THREE from '../node_modules/three/build/three.js'
 
 import {rad, assert, letter_index, V3} from './utils';
 
+
 export const glassType = "magnifying";
 
-// Polar Logo
-var alpha = 30; // degrees
-
+const purple = new THREE.Color( 0xff00ff );
 
 // Ring vertex mapping:
 // (outer layer - top)
@@ -24,32 +23,25 @@ var alpha = 30; // degrees
 //
 
 function ring() {
-    const purple = new THREE.Color( 0xff00ff );
-
     var ring_geom = new THREE.Geometry();
 
     const segments = 20;
     const depth = 1;
-
-    const x_vals = [];
-    const y_vals = [];
+    const r_outer = 1, r_inner = 0.9;
 
     for (let s = 0; s < segments; s++) {
         const d = s/segments * 360;
-        const r_outer = 1, r_inner = 0.9;
-        const x_outer = r_outer*Math.cos(rad(d)), y_outer = r_outer*Math.sin(rad(d));
-        const x_inner = r_inner*Math.cos(rad(d)), y_inner = r_inner*Math.sin(rad(d));
-        x_vals[s] = [];
-        y_vals[s] = [];
-        x_vals[s][0] = x_inner
-        y_vals[s][0] = y_inner
-        x_vals[s][1] = x_outer
-        y_vals[s][1] = y_outer
 
-        ring_geom.vertices.push(V3(x_inner, y_inner, -(depth/2) ));
-        ring_geom.vertices.push(V3(x_outer, y_outer, -(depth/2) ));
-        ring_geom.vertices.push(V3(x_inner, y_inner, depth/2));
-        ring_geom.vertices.push(V3(x_outer, y_outer, depth/2));
+        const x_inner = r_inner*Math.cos(rad(d));
+        const y_inner = r_inner*Math.sin(rad(d));
+
+        const x_outer = r_outer*Math.cos(rad(d));
+        const y_outer = r_outer*Math.sin(rad(d));
+
+        ring_geom.vertices.push(V3(x_inner, y_inner, -depth/2)); // 0
+        ring_geom.vertices.push(V3(x_outer, y_outer, -depth/2)); // 1
+        ring_geom.vertices.push(V3(x_inner, y_inner, depth/2)); // 2
+        ring_geom.vertices.push(V3(x_outer, y_outer, depth/2)); // 3
     }
 
     for (let s = 0; s < segments; s++) {

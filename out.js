@@ -117,7 +117,7 @@
 	    scene.add(pointLight);
 
 	    function animate() {
-	        mag_glass.rotation.y += 0.03;
+	        mag_glass.rotation.y += 0.01;
 	        // draw!
 	        renderer.render(scene, camera);
 	        requestAnimationFrame(animate);
@@ -149,8 +149,7 @@
 
 	var glassType = exports.glassType = "magnifying";
 
-	// Polar Logo
-	var alpha = 30; // degrees
+	var purple = new THREE.Color(0xff00ff);
 
 	// Ring vertex mapping:
 	// (outer layer - top)
@@ -168,35 +167,26 @@
 	//
 
 	function ring() {
-	    var purple = new THREE.Color(0xff00ff);
-
 	    var ring_geom = new THREE.Geometry();
 
 	    var segments = 20;
 	    var depth = 1;
-
-	    var x_vals = [];
-	    var y_vals = [];
+	    var r_outer = 1,
+	        r_inner = 0.9;
 
 	    for (var s = 0; s < segments; s++) {
 	        var d = s / segments * 360;
-	        var r_outer = 1,
-	            r_inner = 0.9;
-	        var x_outer = r_outer * Math.cos((0, _utils.rad)(d)),
-	            y_outer = r_outer * Math.sin((0, _utils.rad)(d));
-	        var x_inner = r_inner * Math.cos((0, _utils.rad)(d)),
-	            y_inner = r_inner * Math.sin((0, _utils.rad)(d));
-	        x_vals[s] = [];
-	        y_vals[s] = [];
-	        x_vals[s][0] = x_inner;
-	        y_vals[s][0] = y_inner;
-	        x_vals[s][1] = x_outer;
-	        y_vals[s][1] = y_outer;
 
-	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, -(depth / 2)));
-	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, -(depth / 2)));
-	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, depth / 2));
-	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, depth / 2));
+	        var x_inner = r_inner * Math.cos((0, _utils.rad)(d));
+	        var y_inner = r_inner * Math.sin((0, _utils.rad)(d));
+
+	        var x_outer = r_outer * Math.cos((0, _utils.rad)(d));
+	        var y_outer = r_outer * Math.sin((0, _utils.rad)(d));
+
+	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, -depth / 2)); // 0
+	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, -depth / 2)); // 1
+	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, depth / 2)); // 2
+	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, depth / 2)); // 3
 	    }
 
 	    var _loop = function _loop(_s) {

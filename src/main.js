@@ -62,7 +62,7 @@ function run() {
     scene.add(pointLight);
 
     function animate() {
-        mag_glass.rotation.y += 0.03;
+        mag_glass.rotation.y += 0.01;
         // draw!
         renderer.render(scene, camera);
         requestAnimationFrame( animate );
