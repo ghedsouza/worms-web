@@ -12,10 +12,10 @@ var alpha = 30; // degrees
 // (outer layer - top)
 //  1           3
 // +-----------+
-// |           |            5            6
+// |(front)    |            5            6
 // |           |            +------------+
 // |           |            |            |
-// |           |            |            |
+// |           |(back)      |            |
 // |           |            |            |
 // |0          |2           |            |
 // +-----------+            |            |
@@ -46,10 +46,10 @@ function ring() {
         x_vals[s][1] = x_outer
         y_vals[s][1] = y_outer
 
-        ring_geom.vertices.push(V3(x_inner, y_inner, 0));
-        ring_geom.vertices.push(V3(x_outer, y_outer, 0));
-        ring_geom.vertices.push(V3(x_inner, y_inner, depth));
-        ring_geom.vertices.push(V3(x_outer, y_outer, depth));
+        ring_geom.vertices.push(V3(x_inner, y_inner, -(depth/2) ));
+        ring_geom.vertices.push(V3(x_outer, y_outer, -(depth/2) ));
+        ring_geom.vertices.push(V3(x_inner, y_inner, depth/2));
+        ring_geom.vertices.push(V3(x_outer, y_outer, depth/2));
     }
 
     for (let s = 0; s < segments; s++) {

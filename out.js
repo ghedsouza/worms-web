@@ -117,7 +117,7 @@
 	    scene.add(pointLight);
 
 	    function animate() {
-	        mag_glass.rotation.y += 0.01;
+	        mag_glass.rotation.y += 0.03;
 	        // draw!
 	        renderer.render(scene, camera);
 	        requestAnimationFrame(animate);
@@ -193,10 +193,10 @@
 	        x_vals[s][1] = x_outer;
 	        y_vals[s][1] = y_outer;
 
-	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, 0));
-	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, 0));
-	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, depth));
-	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, depth));
+	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, -(depth / 2)));
+	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, -(depth / 2)));
+	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, depth / 2));
+	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, depth / 2));
 	    }
 
 	    var _loop = function _loop(_s) {
