@@ -7,77 +7,71 @@ export const glassType = "magnifying";
 // Polar Logo
 var alpha = 30; // degrees
 
-export const glass = function(){
-    var g_height = Math.tan(rad(alpha));
-    var h_depth = 1 - g_height;
+function ring() {
+    const purple = new THREE.Color( 0xff00ff );
 
-    var a = V3(0, 3, 0);
-    var b = V3(1, 3 + g_height, 0);
-    var c = V3(3, 3 + 3*g_height, 0);
-    var d = V3(3, 2 + 3*g_height, 0);
-    var e = V3(3, 3*g_height, 0)
-    var f = V3(2, 2*g_height, 0)
-    var g = V3(1, g_height, 0);
-    var h = V3(1, -h_depth, 0);
-    var i = V3(0,0,0);
-    var j = V3(0,1,0);
-    var k = V3(1, 2 + g_height, 0);
-    var l = V3(2, 1 + 2*g_height, 0);
-    var m = V3(1, 1 + g_height, 0);
-    var n = V3(2, 2 + 2*g_height, 0);
+    var ring_geom = new THREE.Geometry();
 
-    var logo_geom = new THREE.Geometry();
-    var verts = [a,b,c,d,e,f,g,h,i,j,k,l,m,n];
-    for(var ii = 0; ii<verts.length; ii++){
-        verts[ii].x -= 1.5;
-        logo_geom.vertices.push(verts[ii]);
+    const segments = 20;
+
+    const x_vals = [];
+    const y_vals = [];
+
+    for (let s = 0; s < segments; s++) {
+        const d = s/segments * 360;
+        const r_outer = 1, r_inner = 0.9;
+        const x_outer = r_outer*Math.cos(rad(d)), y_outer = r_outer*Math.sin(rad(d));
+        const x_inner = r_inner*Math.cos(rad(d)), y_inner = r_inner*Math.sin(rad(d));
+        x_vals[s] = [];
+        y_vals[s] = [];
+        x_vals[s][0] = x_inner
+        y_vals[s][0] = y_inner
+        x_vals[s][1] = x_outer
+        y_vals[s][1] = y_outer
+
+        ring_geom.vertices.push(V3(x_inner, y_inner, 0));
+        ring_geom.vertices.push(V3(x_outer, y_outer, 0));
     }
 
+    for (let s = 0; s < segments; s++) {
+        function wrap(index) {
+            return index % (segments* 2);
+        }
+        const start_vert_index = s * 2;
+        ring_geom.faces.push(new THREE.Face3(
+            wrap(start_vert_index),
+            wrap(start_vert_index + 1),
+            wrap(start_vert_index + 3),
+            null,
+            purple
+            ));
+        ring_geom.faces.push(new THREE.Face3(
+            wrap(start_vert_index),
+            wrap(start_vert_index + 3),
+            wrap(start_vert_index + 2),
+            null,
+            purple
+            ));
+    }
+    return ring_geom;
+}
+
+
+export const glass = function(){
     const vomit = new THREE.Color( 0xBAD646 );
     const green = new THREE.Color( 0x33B24A );
     const purple = new THREE.Color( 0xff00ff );
     const red = new THREE.Color( 0xF15B29 );
     const blue = new THREE.Color( 0x1877AB );
 
-    function pF3(l1, l2, l3, color) {
-        return new THREE.Face3(
-            letter_index(l1),
-            letter_index(l2),
-            letter_index(l3),
-            null,
-            color
-        )
-    }
+    const ring_geom = ring();
+    ring_geom.computeFaceNormals();
 
-    function add_front_and_back_face(l1, l2, l3, color) {
-        logo_geom.faces.push(pF3(l1, l2, l3, color));
-        logo_geom.faces.push(pF3(l3, l2, l1, color));
-    }
-
-    add_front_and_back_face('i','g','j', purple);
-    add_front_and_back_face('g','m','j', green);
-    add_front_and_back_face('h','g','i', red);
-
-    add_front_and_back_face('m','b','j', vomit);
-    add_front_and_back_face('j','b','a', vomit);
-
-    add_front_and_back_face('k','c','b', blue);
-    add_front_and_back_face('d','c','k', blue);
-
-    add_front_and_back_face('g','l','m', blue);
-    add_front_and_back_face('f','l','g', blue);
-
-    add_front_and_back_face('e','d','f', blue);
-    add_front_and_back_face('f','d','n', blue);
-
-    logo_geom.computeFaceNormals();
-
-    var logo_object = new THREE.Mesh(
-        logo_geom,
+    var mag_glass_object = new THREE.Mesh(
+        ring_geom,
         new THREE.MeshPhongMaterial({
             vertexColors: THREE.FaceColors
             })
         );
-    // logo_object.translateX(1.5);
-    return logo_object;
+    return mag_glass_object;
 };
