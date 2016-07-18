@@ -28,6 +28,7 @@
     "babel-register": "6.9.0",
     "babel-runtime": "6.5.0",
     "jquery": "^1.7.4",
+    "stats.js": "git+https://github.com/mrdoob/stats.js.git",
     "three": "^0.77.1",
     "webpack": "1.13.1"
   },

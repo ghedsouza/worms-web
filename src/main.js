@@ -1,11 +1,11 @@
 import * as glass from './glass';
-import $ from '../node_modules/jquery/dist/jquery.js'
-import * as THREE from '../node_modules/three/build/three.js'
+import $ from '../node_modules/jquery/dist/jquery.js';
+import * as THREE from '../node_modules/three/build/three.js';
+import Stats from '../node_modules/stats.js/build/stats.min.js';
 
-console.log(glass.glassType);
-console.log(THREE.Scene());
 
-// console.log("x: ", three, THREE)
+console.log(Stats);
+
 
 function run() {
     var $container = $('#container');
@@ -61,14 +61,21 @@ function run() {
     // add to the scene
     scene.add(pointLight);
 
+    const stats = new Stats();
+    stats.showPanel(0);
+    document.body.appendChild(stats.dom);
+
     function animate() {
+        stats.begin();
+
         mag_glass.rotation.y += 0.01;
         // draw!
         renderer.render(scene, camera);
+
+        stats.end();
         requestAnimationFrame( animate );
     }
     requestAnimationFrame( animate );
 }
 
 window.run = run;
-// run();
