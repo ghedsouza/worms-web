@@ -157,23 +157,27 @@
 
 	var glassType = exports.glassType = "magnifying";
 
+	var vomit = new THREE.Color(0xBAD646);
+	var green = new THREE.Color(0x33B24A);
 	var purple = new THREE.Color(0xff00ff);
+	var red = new THREE.Color(0xF15B29);
+	var blue = new THREE.Color(0x1877AB);
 
-	// Ring vertex mapping:
-	// (outer layer - top)
-	//  1           3
+	// (figure 1) Ring vertex mapping:
+	//
+	// (outer side - top)
+	//  1           3 (current layer)
 	// +-----------+
-	// |(front)    |            5            6
+	// |(front)    |            5            7 (next layer)
 	// |           |            +------------+
 	// |           |            |            |
 	// |           |(back)      |            |
 	// |           |            |            |
 	// |0          |2           |            |
 	// +-----------+            |            |
-	// (inner layer -bottom )   |4           |7
+	// (inner side - bottom)    |4           |6
 	//                          +------------+
 	//
-
 	function ring() {
 	    var ring_geom = new THREE.Geometry();
 
@@ -221,20 +225,39 @@
 	    return ring_geom;
 	}
 
+	function handle() {
+	    // return new THREE.SphereGeometry( 5, 32, 32 );
+	    var tube_geom = new THREE.CylinderGeometry(1, 1, 1, 8, 1);
+	    return tube_geom;
+	}
+
 	var glass = exports.glass = function glass() {
-	    var vomit = new THREE.Color(0xBAD646);
-	    var green = new THREE.Color(0x33B24A);
-	    var purple = new THREE.Color(0xff00ff);
-	    var red = new THREE.Color(0xF15B29);
-	    var blue = new THREE.Color(0x1877AB);
+	    var blueMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
+	    var redMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([blueMaterial, redMaterial]);
 
 	    var ring_geom = ring();
 	    ring_geom.computeFaceNormals();
 
-	    var mag_glass_object = new THREE.Mesh(ring_geom, new THREE.MeshPhongMaterial({
-	        vertexColors: THREE.FaceColors
-	    }));
-	    return mag_glass_object;
+	    var handle_geom = handle();
+	    handle_geom.computeFaceNormals();
+
+	    for (var face in handle_geom.faces) {
+	        handle_geom.faces[face].materialIndex = 0;
+	    }
+	    for (var _face in ring_geom.faces) {
+	        ring_geom.faces[_face].materialIndex = 1;
+	    }
+	    handle_geom.translate(0, 1, 0);
+
+	    var mergeGeometry = new THREE.Geometry();
+
+	    mergeGeometry.merge(ring_geom, ring_geom.matrix);
+	    mergeGeometry.merge(handle_geom, handle_geom.matrix);
+
+	    var mergeMesh = new THREE.Mesh(mergeGeometry, meshFaceMaterial);
+
+	    return mergeMesh;
 	};
 
 /***/ },

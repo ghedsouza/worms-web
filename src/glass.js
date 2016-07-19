@@ -2,26 +2,30 @@ import * as THREE from '../node_modules/three/build/three.js'
 
 import {rad, assert, letter_index, V3} from './utils';
 
-
 export const glassType = "magnifying";
 
+const vomit = new THREE.Color( 0xBAD646 );
+const green = new THREE.Color( 0x33B24A );
 const purple = new THREE.Color( 0xff00ff );
+const red = new THREE.Color( 0xF15B29 );
+const blue = new THREE.Color( 0x1877AB );
 
-// Ring vertex mapping:
-// (outer layer - top)
-//  1           3
+
+// (figure 1) Ring vertex mapping:
+//
+// (outer side - top)
+//  1           3 (current layer)
 // +-----------+
-// |(front)    |            5            6
+// |(front)    |            5            7 (next layer)
 // |           |            +------------+
 // |           |            |            |
 // |           |(back)      |            |
 // |           |            |            |
 // |0          |2           |            |
 // +-----------+            |            |
-// (inner layer -bottom )   |4           |7
+// (inner side - bottom)    |4           |6
 //                          +------------+
 //
-
 function ring() {
     var ring_geom = new THREE.Geometry();
 
@@ -70,22 +74,37 @@ function ring() {
     return ring_geom;
 }
 
+function handle() {
+    // return new THREE.SphereGeometry( 5, 32, 32 );
+    const tube_geom = new THREE.CylinderGeometry(1, 1, 1, 8, 1);
+    return tube_geom;
+}
 
-export const glass = function(){
-    const vomit = new THREE.Color( 0xBAD646 );
-    const green = new THREE.Color( 0x33B24A );
-    const purple = new THREE.Color( 0xff00ff );
-    const red = new THREE.Color( 0xF15B29 );
-    const blue = new THREE.Color( 0x1877AB );
+export const glass = function() {
+    const blueMaterial = new THREE.MeshPhongMaterial( {color: 0x0000FF } );
+    const redMaterial = new THREE.MeshPhongMaterial({ color:0xFF0000 });
+    const meshFaceMaterial = new THREE.MeshFaceMaterial( [ blueMaterial, redMaterial ] );
 
     const ring_geom = ring();
     ring_geom.computeFaceNormals();
 
-    var mag_glass_object = new THREE.Mesh(
-        ring_geom,
-        new THREE.MeshPhongMaterial({
-            vertexColors: THREE.FaceColors
-            })
-        );
-    return mag_glass_object;
+    const handle_geom = handle();
+    handle_geom.computeFaceNormals();
+
+    for (const face in handle_geom.faces ) {
+        handle_geom.faces[face].materialIndex = 0;
+    }
+    for (const face in ring_geom.faces ) {
+        ring_geom.faces[face].materialIndex = 1;
+    }
+    handle_geom.translate(0, 1, 0);
+
+    const mergeGeometry = new THREE.Geometry();
+
+    mergeGeometry.merge(ring_geom, ring_geom.matrix);
+    mergeGeometry.merge(handle_geom, handle_geom.matrix);
+
+    const mergeMesh = new THREE.Mesh(mergeGeometry, meshFaceMaterial);
+
+    return mergeMesh;
 };
