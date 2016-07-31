@@ -70,8 +70,6 @@
 
 	function run() {
 	    var $container = (0, _jquery2.default)('#container');
-	    console.log($container);
-
 	    // set the scene size
 	    var WIDTH = 500,
 	        HEIGHT = 500;
@@ -85,17 +83,15 @@
 	    // create a WebGL renderer, camera
 	    // and a scene
 	    var renderer = new THREE.WebGLRenderer();
-	    var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	    var scene = new THREE.Scene();
-
+	    var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	    // the camera starts at 0,0,0 so pull it back
 	    camera.position.z = 10;
 	    // camera.position.x = 1;
 	    camera.position.y = 0;
+	    scene.add(camera);
 
-	    // start the renderer
 	    renderer.setSize(WIDTH, HEIGHT);
-
 	    // attach the render-supplied DOM element
 	    $container.append(renderer.domElement);
 
@@ -103,18 +99,10 @@
 
 	    scene.add(mag_glass);
 
-	    // and the camera
-	    scene.add(camera);
-
-	    // create a point light
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
-
-	    // set its position
 	    pointLight.position.x = 10;
 	    pointLight.position.y = 50;
 	    pointLight.position.z = 130;
-
-	    // add to the scene
 	    scene.add(pointLight);
 
 	    var stats = new _statsMin2.default();
@@ -123,11 +111,8 @@
 
 	    function animate() {
 	        stats.begin();
-
 	        mag_glass.rotation.y += 0.01;
-	        // draw!
 	        renderer.render(scene, camera);
-
 	        stats.end();
 	        requestAnimationFrame(animate);
 	    }
@@ -162,6 +147,8 @@
 	var purple = new THREE.Color(0xff00ff);
 	var red = new THREE.Color(0xF15B29);
 	var blue = new THREE.Color(0x1877AB);
+	var silver = new THREE.Color(0xe6e6e6);
+	var wood = new THREE.Color(0x997300);
 
 	// (figure 1) Ring vertex mapping:
 	//
@@ -182,7 +169,7 @@
 	    var ring_geom = new THREE.Geometry();
 
 	    var segments = 20;
-	    var depth = 1;
+	    var depth = 0.5;
 	    var r_outer = 1,
 	        r_inner = 0.9;
 
@@ -227,28 +214,28 @@
 
 	function handle() {
 	    // return new THREE.SphereGeometry( 5, 32, 32 );
-	    var tube_geom = new THREE.CylinderGeometry(1, 1, 1, 8, 1);
+	    var tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 8, 1);
 	    return tube_geom;
 	}
 
 	var glass = exports.glass = function glass() {
-	    var blueMaterial = new THREE.MeshPhongMaterial({ color: 0x0000FF });
-	    var redMaterial = new THREE.MeshPhongMaterial({ color: 0xFF0000 });
-	    var meshFaceMaterial = new THREE.MeshFaceMaterial([blueMaterial, redMaterial]);
+	    var ringMaterial = new THREE.MeshPhongMaterial({ color: silver });
+	    var handleMaterial = new THREE.MeshPhongMaterial({ color: wood });
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([ringMaterial, handleMaterial]);
 
 	    var ring_geom = ring();
 	    ring_geom.computeFaceNormals();
 
 	    var handle_geom = handle();
+	    handle_geom.translate(0, -(1 + 2.25 / 2), 0);
 	    handle_geom.computeFaceNormals();
 
-	    for (var face in handle_geom.faces) {
-	        handle_geom.faces[face].materialIndex = 0;
+	    for (var face in ring_geom.faces) {
+	        ring_geom.faces[face].materialIndex = 0;
 	    }
-	    for (var _face in ring_geom.faces) {
-	        ring_geom.faces[_face].materialIndex = 1;
+	    for (var _face in handle_geom.faces) {
+	        handle_geom.faces[_face].materialIndex = 1;
 	    }
-	    handle_geom.translate(0, 1, 0);
 
 	    var mergeGeometry = new THREE.Geometry();
 

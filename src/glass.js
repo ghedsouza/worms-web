@@ -9,6 +9,8 @@ const green = new THREE.Color( 0x33B24A );
 const purple = new THREE.Color( 0xff00ff );
 const red = new THREE.Color( 0xF15B29 );
 const blue = new THREE.Color( 0x1877AB );
+const silver = new THREE.Color( 0xe6e6e6 );
+const wood = new THREE.Color( 0x997300 );
 
 
 // (figure 1) Ring vertex mapping:
@@ -30,7 +32,7 @@ function ring() {
     var ring_geom = new THREE.Geometry();
 
     const segments = 20;
-    const depth = 1;
+    const depth = 0.5;
     const r_outer = 1, r_inner = 0.9;
 
     for (let s = 0; s < segments; s++) {
@@ -76,28 +78,29 @@ function ring() {
 
 function handle() {
     // return new THREE.SphereGeometry( 5, 32, 32 );
-    const tube_geom = new THREE.CylinderGeometry(1, 1, 1, 8, 1);
+    const tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 8, 1);
     return tube_geom;
 }
 
 export const glass = function() {
-    const blueMaterial = new THREE.MeshPhongMaterial( {color: 0x0000FF } );
-    const redMaterial = new THREE.MeshPhongMaterial({ color:0xFF0000 });
-    const meshFaceMaterial = new THREE.MeshFaceMaterial( [ blueMaterial, redMaterial ] );
+    const ringMaterial = new THREE.MeshPhongMaterial({ color: silver });
+    const handleMaterial = new THREE.MeshPhongMaterial({ color: wood });
+    const meshFaceMaterial = new THREE.MeshFaceMaterial( [ ringMaterial, handleMaterial ] );
 
     const ring_geom = ring();
     ring_geom.computeFaceNormals();
 
     const handle_geom = handle();
+    handle_geom.translate(0, -(1 + (2.25/2) ), 0);
     handle_geom.computeFaceNormals();
 
-    for (const face in handle_geom.faces ) {
-        handle_geom.faces[face].materialIndex = 0;
-    }
     for (const face in ring_geom.faces ) {
-        ring_geom.faces[face].materialIndex = 1;
+        ring_geom.faces[face].materialIndex = 0;
     }
-    handle_geom.translate(0, 1, 0);
+    for (const face in handle_geom.faces ) {
+        handle_geom.faces[face].materialIndex = 1;
+    }
+
 
     const mergeGeometry = new THREE.Geometry();
 

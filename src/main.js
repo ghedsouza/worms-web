@@ -9,8 +9,6 @@ console.log(Stats);
 
 function run() {
     var $container = $('#container');
-    console.log($container);
-
     // set the scene size
     var WIDTH = 500,
         HEIGHT = 500;
@@ -24,22 +22,20 @@ function run() {
     // create a WebGL renderer, camera
     // and a scene
     var renderer = new THREE.WebGLRenderer();
+    var scene = new THREE.Scene();
     var camera = new THREE.PerspectiveCamera(
         VIEW_ANGLE,
         ASPECT,
         NEAR,
         FAR
         );
-    var scene = new THREE.Scene();
-
     // the camera starts at 0,0,0 so pull it back
     camera.position.z = 10;
     // camera.position.x = 1;
     camera.position.y = 0;
+    scene.add(camera);
 
-    // start the renderer
     renderer.setSize(WIDTH, HEIGHT);
-
     // attach the render-supplied DOM element
     $container.append(renderer.domElement);
 
@@ -47,18 +43,10 @@ function run() {
 
     scene.add(mag_glass);
 
-    // and the camera
-    scene.add(camera);
-
-    // create a point light
-    var pointLight = new THREE.PointLight( 0xFFFFFF );
-
-    // set its position
+    const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
     pointLight.position.y = 50;
     pointLight.position.z = 130;
-
-    // add to the scene
     scene.add(pointLight);
 
     const stats = new Stats();
@@ -67,11 +55,8 @@ function run() {
 
     function animate() {
         stats.begin();
-
         mag_glass.rotation.y += 0.01;
-        // draw!
         renderer.render(scene, camera);
-
         stats.end();
         requestAnimationFrame( animate );
     }
