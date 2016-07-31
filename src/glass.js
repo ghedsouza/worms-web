@@ -101,7 +101,6 @@ export const glass = function() {
         handle_geom.faces[face].materialIndex = 1;
     }
 
-
     const mergeGeometry = new THREE.Geometry();
 
     mergeGeometry.merge(ring_geom, ring_geom.matrix);

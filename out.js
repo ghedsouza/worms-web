@@ -68,8 +68,19 @@
 
 	console.log(_statsMin2.default);
 
+	function onDocumentMouseMove(event) {
+	    // the following line would stop any other event handler from firing
+	    // (such as the mouse's TrackballControls)
+	    // event.preventDefault();
+	    // update sprite position
+	    mousePos.x = Math.min(event.clientX, 500);
+	    mousePos.y = Math.min(event.clientY, 500);
+	}
+	var mousePos = { x: 0, y: 0 };
+
 	function run() {
 	    var $container = (0, _jquery2.default)('#container');
+	    var $debug = (0, _jquery2.default)('#debug');
 	    // set the scene size
 	    var WIDTH = 500,
 	        HEIGHT = 500;
@@ -109,9 +120,18 @@
 	    stats.showPanel(0);
 	    document.body.appendChild(stats.dom);
 
+	    // when the mouse moves, call the given function
+	    document.addEventListener('mousemove', onDocumentMouseMove, false);
+
 	    function animate() {
 	        stats.begin();
 	        mag_glass.rotation.y += 0.01;
+	        // console.log(mousePos.x, mousePos.y);
+	        $debug.html("x: " + mousePos.x + ", y: " + mousePos.y);
+	        mag_glass.position.set(
+	        // console.log(
+	        -4 + 8 * mousePos.x / 500, -4 + 8 * (500 - mousePos.y) / 500, 0);
+	        // mag_glass.position.set(-1, -1, 0);
 	        renderer.render(scene, camera);
 	        stats.end();
 	        requestAnimationFrame(animate);
