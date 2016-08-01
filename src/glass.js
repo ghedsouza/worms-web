@@ -69,7 +69,7 @@ function ring() {
 }
 
 function handle() {
-    const tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 8, 1);
+    const tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 20, 1);
     return tube_geom;
 }
 

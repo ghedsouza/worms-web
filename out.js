@@ -62,6 +62,10 @@
 
 	var glass = _interopRequireWildcard(_glass);
 
+	var _ground = __webpack_require__(7);
+
+	var ground = _interopRequireWildcard(_ground);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -107,8 +111,10 @@
 	    $container.append(renderer.domElement);
 
 	    var mag_glass = glass.glass();
+	    var surface = ground.surface();
 
 	    scene.add(mag_glass);
+	    scene.add(surface);
 
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
 	    pointLight.position.x = 10;
@@ -126,8 +132,8 @@
 	    function animate() {
 	        stats.begin();
 	        mag_glass.rotation.y += 0.01;
-	        $debug.html("x: " + mousePos.x + ", y: " + mousePos.y);
-	        mag_glass.position.set(-4 + 8 * mousePos.x / 500, -4 + 8 * (500 - mousePos.y) / 500, 0);
+	        $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
+	        mag_glass.position.set(-4 + 8 * mousePos.x / 500, -4 + 8 * (500 - mousePos.y) / 500, 3);
 	        renderer.render(scene, camera);
 	        stats.end();
 	        requestAnimationFrame(animate);
@@ -52921,7 +52927,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.glass = exports.glassType = undefined;
+	exports.glass = undefined;
 
 	var _three = __webpack_require__(2);
 
@@ -52934,8 +52940,6 @@
 	var colors = _interopRequireWildcard(_colors);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	var glassType = exports.glassType = "magnifying";
 
 	// (figure 1) Ring vertex mapping:
 	//
@@ -52969,6 +52973,7 @@
 	        var x_outer = r_outer * Math.cos((0, _utils.rad)(d));
 	        var y_outer = r_outer * Math.sin((0, _utils.rad)(d));
 
+	        // See (figure 1) above for vertex map
 	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, -depth / 2)); // 0
 	        ring_geom.vertices.push((0, _utils.V3)(x_outer, y_outer, -depth / 2)); // 1
 	        ring_geom.vertices.push((0, _utils.V3)(x_inner, y_inner, depth / 2)); // 2
@@ -53000,8 +53005,7 @@
 	}
 
 	function handle() {
-	    // return new THREE.SphereGeometry( 5, 32, 32 );
-	    var tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 8, 1);
+	    var tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 20, 1);
 	    return tube_geom;
 	}
 
@@ -53038,7 +53042,7 @@
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
@@ -53056,7 +53060,7 @@
 
 	function assert(condition, message) {
 	    if (!condition) {
-	        throw message || "Assertion failed";
+	        throw message || 'Assertion failed';
 	    }
 	}
 
@@ -53066,8 +53070,8 @@
 
 	function letter_index(letter) {
 	    assert(letter.length === 1);
-	    assert(letter >= "a");
-	    assert(letter <= "z");
+	    assert(letter >= 'a');
+	    assert(letter <= 'z');
 	    var index = letter.charCodeAt(0) - 97;
 	    assert(index >= 0 && index <= 25);
 	    return index;
@@ -53101,6 +53105,62 @@
 	var blue = exports.blue = new THREE.Color(0x1877AB);
 	var silver = exports.silver = new THREE.Color(0xe6e6e6);
 	var wood = exports.wood = new THREE.Color(0x997300);
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.surface = undefined;
+
+	var _three = __webpack_require__(2);
+
+	var THREE = _interopRequireWildcard(_three);
+
+	var _utils = __webpack_require__(5);
+
+	var _colors = __webpack_require__(6);
+
+	var colors = _interopRequireWildcard(_colors);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	var get_surface_geom = function get_surface_geom() {
+	    var length = 8;
+	    var surface_geom = new THREE.Geometry();
+	    surface_geom.vertices.push((0, _utils.V3)(-(length / 2), -(length / 2), 0));
+	    surface_geom.vertices.push((0, _utils.V3)(-(length / 2), length / 2, 0));
+	    surface_geom.vertices.push((0, _utils.V3)(length / 2, -(length / 2), 0));
+	    surface_geom.vertices.push((0, _utils.V3)(length / 2, length / 2, 0));
+
+	    function wrap(index) {
+	        return index % 4;
+	    }
+	    function face(a, b, c) {
+	        return new THREE.Face3(wrap(a), wrap(b), wrap(c), null, null);
+	    }
+
+	    surface_geom.faces.push(face(0, 2, 3));
+	    surface_geom.faces.push(face(0, 3, 1));
+	    return surface_geom;
+	};
+
+	var surface = exports.surface = function surface() {
+	    var surfaceMaterial = new THREE.MeshPhongMaterial({ color: colors.red });
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([surfaceMaterial]);
+
+	    var surface_geom = get_surface_geom();
+	    surface_geom.computeFaceNormals();
+	    for (var face in surface_geom.faces) {
+	        surface_geom.faces[face].materialIndex = 0;
+	    }
+
+	    return new THREE.Mesh(surface_geom, meshFaceMaterial);
+	};
 
 /***/ }
 /******/ ]);

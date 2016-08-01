@@ -3,6 +3,7 @@ import * as THREE from '../node_modules/three/build/three.js';
 import Stats from '../node_modules/stats.js/build/stats.min.js';
 
 import * as glass from './glass';
+import * as ground from './ground';
 
 
 console.log(Stats);
@@ -52,8 +53,10 @@ function run() {
     $container.append(renderer.domElement);
 
     const mag_glass = glass.glass();
+    const surface = ground.surface();
 
     scene.add(mag_glass);
+    scene.add(surface);
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
@@ -75,7 +78,7 @@ function run() {
         mag_glass.position.set(
             -4 + (8 * mousePos.x / 500),
             -4 + (8 * (500-mousePos.y) / 500),
-            0
+            3
             );
         renderer.render(scene, camera);
         stats.end();
