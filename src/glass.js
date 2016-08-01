@@ -1,16 +1,9 @@
-import * as THREE from '../node_modules/three/build/three.js'
+import * as THREE from '../node_modules/three/build/three.js';
 
 import {rad, assert, letter_index, V3} from './utils';
+import * as colors from './colors';
 
 export const glassType = "magnifying";
-
-const vomit = new THREE.Color( 0xBAD646 );
-const green = new THREE.Color( 0x33B24A );
-const purple = new THREE.Color( 0xff00ff );
-const red = new THREE.Color( 0xF15B29 );
-const blue = new THREE.Color( 0x1877AB );
-const silver = new THREE.Color( 0xe6e6e6 );
-const wood = new THREE.Color( 0x997300 );
 
 
 // (figure 1) Ring vertex mapping:
@@ -61,7 +54,7 @@ function ring() {
                 wrap(i + b),
                 wrap(i + c),
                 null,
-                purple
+                null
             )
         }
         ring_geom.faces.push(face(0, 5, 1));
@@ -83,8 +76,8 @@ function handle() {
 }
 
 export const glass = function() {
-    const ringMaterial = new THREE.MeshPhongMaterial({ color: silver });
-    const handleMaterial = new THREE.MeshPhongMaterial({ color: wood });
+    const ringMaterial = new THREE.MeshPhongMaterial({ color: colors.silver });
+    const handleMaterial = new THREE.MeshPhongMaterial({ color: colors.wood });
     const meshFaceMaterial = new THREE.MeshFaceMaterial( [ ringMaterial, handleMaterial ] );
 
     const ring_geom = ring();
