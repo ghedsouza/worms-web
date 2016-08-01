@@ -58,7 +58,9 @@
 
 	var _statsMin2 = _interopRequireDefault(_statsMin);
 
-	var _glass = __webpack_require__(4);
+	var _utils = __webpack_require__(4);
+
+	var _glass = __webpack_require__(5);
 
 	var glass = _interopRequireWildcard(_glass);
 
@@ -131,9 +133,18 @@
 
 	    function animate() {
 	        stats.begin();
-	        mag_glass.rotation.y += 0.01;
+	        var xPercentage = mousePos.x / 500;
+	        var yPercentage = (500 - mousePos.y) / 500;
+
+	        var xMagPos = -4 + 8 * xPercentage;
+	        var yMagPos = -4 + 8 * yPercentage;
+
+	        mag_glass.rotation.x = -(0, _utils.rad)(-45 + yPercentage * 90);
+	        mag_glass.rotation.y = (0, _utils.rad)(-45 + xPercentage * 90);
+
 	        $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
-	        mag_glass.position.set(-4 + 8 * mousePos.x / 500, -4 + 8 * (500 - mousePos.y) / 500, 3);
+	        mag_glass.position.set(xMagPos, yMagPos, 3);
+
 	        renderer.render(scene, camera);
 	        stats.end();
 	        requestAnimationFrame(animate);
@@ -52927,13 +52938,56 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.assert = assert;
+	exports.rad = rad;
+	exports.letter_index = letter_index;
+	exports.V3 = V3;
+
+	var _three = __webpack_require__(2);
+
+	var THREE = _interopRequireWildcard(_three);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function assert(condition, message) {
+	    if (!condition) {
+	        throw message || 'Assertion failed';
+	    }
+	}
+
+	function rad(deg) {
+	    return deg * Math.PI / 180;
+	}
+
+	function letter_index(letter) {
+	    assert(letter.length === 1);
+	    assert(letter >= 'a');
+	    assert(letter <= 'z');
+	    var index = letter.charCodeAt(0) - 97;
+	    assert(index >= 0 && index <= 25);
+	    return index;
+	}
+
+	function V3(x, y, z) {
+	    return new THREE.Vector3(x, y, z);
+	}
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
 	exports.glass = undefined;
 
 	var _three = __webpack_require__(2);
 
 	var THREE = _interopRequireWildcard(_three);
 
-	var _utils = __webpack_require__(5);
+	var _utils = __webpack_require__(4);
 
 	var _colors = __webpack_require__(6);
 
@@ -53039,49 +53093,6 @@
 	};
 
 /***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.assert = assert;
-	exports.rad = rad;
-	exports.letter_index = letter_index;
-	exports.V3 = V3;
-
-	var _three = __webpack_require__(2);
-
-	var THREE = _interopRequireWildcard(_three);
-
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-	function assert(condition, message) {
-	    if (!condition) {
-	        throw message || 'Assertion failed';
-	    }
-	}
-
-	function rad(deg) {
-	    return deg * Math.PI / 180;
-	}
-
-	function letter_index(letter) {
-	    assert(letter.length === 1);
-	    assert(letter >= 'a');
-	    assert(letter <= 'z');
-	    var index = letter.charCodeAt(0) - 97;
-	    assert(index >= 0 && index <= 25);
-	    return index;
-	}
-
-	function V3(x, y, z) {
-	    return new THREE.Vector3(x, y, z);
-	}
-
-/***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -53121,7 +53132,7 @@
 
 	var THREE = _interopRequireWildcard(_three);
 
-	var _utils = __webpack_require__(5);
+	var _utils = __webpack_require__(4);
 
 	var _colors = __webpack_require__(6);
 

@@ -2,6 +2,7 @@ import $ from '../node_modules/jquery/dist/jquery.js';
 import * as THREE from '../node_modules/three/build/three.js';
 import Stats from '../node_modules/stats.js/build/stats.min.js';
 
+import {rad, assert, letter_index, V3} from './utils';
 import * as glass from './glass';
 import * as ground from './ground';
 
@@ -73,13 +74,20 @@ function run() {
 
     function animate() {
         stats.begin();
-        mag_glass.rotation.y += 0.01;
+        const xPercentage = mousePos.x / 500;
+        const yPercentage = (500-mousePos.y) / 500;
+
+        const xMagPos = -4 + (8 * xPercentage);
+        const yMagPos = -4 + (8 * yPercentage);
+
+        mag_glass.rotation.x = -rad(-45 + (yPercentage * 90));
+        mag_glass.rotation.y = rad(-45 + (xPercentage * 90));
+
         $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
         mag_glass.position.set(
-            -4 + (8 * mousePos.x / 500),
-            -4 + (8 * (500-mousePos.y) / 500),
-            3
+            xMagPos, yMagPos, 3
             );
+
         renderer.render(scene, camera);
         stats.end();
         requestAnimationFrame( animate );
