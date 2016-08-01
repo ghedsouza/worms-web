@@ -3,8 +3,6 @@ import * as THREE from '../node_modules/three/build/three.js';
 import {rad, assert, letter_index, V3} from './utils';
 import * as colors from './colors';
 
-export const glassType = "magnifying";
-
 
 // (figure 1) Ring vertex mapping:
 //
@@ -37,6 +35,7 @@ function ring() {
         const x_outer = r_outer*Math.cos(rad(d));
         const y_outer = r_outer*Math.sin(rad(d));
 
+        // See (figure 1) above for vertex map
         ring_geom.vertices.push(V3(x_inner, y_inner, -depth/2)); // 0
         ring_geom.vertices.push(V3(x_outer, y_outer, -depth/2)); // 1
         ring_geom.vertices.push(V3(x_inner, y_inner, depth/2)); // 2
@@ -55,7 +54,7 @@ function ring() {
                 wrap(i + c),
                 null,
                 null
-            )
+            );
         }
         ring_geom.faces.push(face(0, 5, 1));
         ring_geom.faces.push(face(0, 4, 5));
@@ -70,7 +69,6 @@ function ring() {
 }
 
 function handle() {
-    // return new THREE.SphereGeometry( 5, 32, 32 );
     const tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 8, 1);
     return tube_geom;
 }

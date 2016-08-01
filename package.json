@@ -2,9 +2,14 @@
   "name": "worms",
   "version": "1.0.0",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ghedsouza/worms-web.git"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "./node_modules/.bin/eslint src",
     "compile": "npm run babel && npm run webpack",
     "babel": "./node_modules/.bin/babel src -d lib",
     "webpack": "./node_modules/.bin/webpack lib/main.js out.js"
@@ -30,7 +35,11 @@
     "jquery": "^1.7.4",
     "stats.js": "git+https://github.com/mrdoob/stats.js.git",
     "three": "^0.77.1",
+    "uglify-js": "^2.7.0",
     "webpack": "1.13.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "eslint": "^3.2.0",
+    "eslint-config-google": "^0.6.0"
+  }
 }

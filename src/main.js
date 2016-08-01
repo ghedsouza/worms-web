@@ -71,7 +71,7 @@ function run() {
     function animate() {
         stats.begin();
         mag_glass.rotation.y += 0.01;
-        $debug.html("x: " + mousePos.x + ", y: " + mousePos.y);
+        $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
         mag_glass.position.set(
             -4 + (8 * mousePos.x / 500),
             -4 + (8 * (500-mousePos.y) / 500),
