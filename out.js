@@ -68,11 +68,15 @@
 
 	var ground = _interopRequireWildcard(_ground);
 
+	var _worm = __webpack_require__(8);
+
+	var worm = _interopRequireWildcard(_worm);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	console.log(_statsMin2.default);
+	var mousePos = { x: 0, y: 0 };
 
 	function onDocumentMouseMove(event) {
 	    // the following line would stop any other event handler from firing
@@ -82,11 +86,19 @@
 	    mousePos.x = Math.min(event.clientX, 500);
 	    mousePos.y = Math.min(event.clientY, 500);
 	}
-	var mousePos = { x: 0, y: 0 };
+
+	var timeZero = Date.now();
+	var t = function t() {
+	    return Date.now() - timeZero;
+	};
+	var t_sec = function t_sec() {
+	    return t() / 1000;
+	};
 
 	function run() {
 	    var $container = (0, _jquery2.default)('#container');
 	    var $debug = (0, _jquery2.default)('#debug');
+
 	    // set the scene size
 	    var WIDTH = 500,
 	        HEIGHT = 500;
@@ -104,25 +116,26 @@
 	    var camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
 	    // the camera starts at 0,0,0 so pull it back
 	    camera.position.z = 10;
-	    // camera.position.x = 1;
-	    camera.position.y = 0;
-	    scene.add(camera);
 
 	    renderer.setSize(WIDTH, HEIGHT);
+
 	    // attach the render-supplied DOM element
 	    $container.append(renderer.domElement);
 
 	    var mag_glass = glass.glass();
 	    var surface = ground.surface();
-
-	    scene.add(mag_glass);
-	    scene.add(surface);
+	    var wormModel = worm.wormTest();
 
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
 	    pointLight.position.x = 10;
 	    pointLight.position.y = 50;
 	    pointLight.position.z = 130;
+
+	    scene.add(camera);
 	    scene.add(pointLight);
+	    scene.add(surface);
+	    scene.add(mag_glass);
+	    scene.add(wormModel);
 
 	    var stats = new _statsMin2.default();
 	    stats.showPanel(0);
@@ -142,12 +155,18 @@
 	        mag_glass.rotation.x = -(0, _utils.rad)(-45 + yPercentage * 90);
 	        mag_glass.rotation.y = (0, _utils.rad)(-45 + xPercentage * 90);
 
-	        $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
+	        $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
+
+	        var worm_t = t_sec() / 5;
+	        wormModel.position.set(worm_t, Math.sin(worm_t), 0);
+	        wormModel.rotation.z = Math.cos(worm_t) + (0, _utils.rad)(90);
+
 	        mag_glass.position.set(xMagPos, yMagPos, 3);
 
 	        renderer.render(scene, camera);
-	        stats.end();
+
 	        requestAnimationFrame(animate);
+	        stats.end();
 	    }
 	    requestAnimationFrame(animate);
 	}
@@ -52981,7 +53000,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.glass = undefined;
+	exports.glass = exports.ring = undefined;
 
 	var _three = __webpack_require__(2);
 
@@ -53010,7 +53029,7 @@
 	// (inner side - bottom)    |4           |6
 	//                          +------------+
 	//
-	function ring() {
+	var ring = exports.ring = function ring() {
 	    var ring_geom = new THREE.Geometry();
 
 	    var segments = 20;
@@ -53056,7 +53075,7 @@
 	        _loop(_s);
 	    }
 	    return ring_geom;
-	}
+	};
 
 	function handle() {
 	    var tube_geom = new THREE.CylinderGeometry(0.2, 0.25, 2.25, 20, 1);
@@ -53171,6 +53190,44 @@
 	    }
 
 	    return new THREE.Mesh(surface_geom, meshFaceMaterial);
+	};
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.wormTest = undefined;
+
+	var _three = __webpack_require__(2);
+
+	var THREE = _interopRequireWildcard(_three);
+
+	var _utils = __webpack_require__(4);
+
+	var _colors = __webpack_require__(6);
+
+	var colors = _interopRequireWildcard(_colors);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	var wormTest = exports.wormTest = function wormTest() {
+	    var tubeGeom = new THREE.CylinderGeometry(0.25, 0.25, 1, 8, 1);
+
+	    var tubeMaterial = new THREE.MeshPhongMaterial({ color: colors.silver });
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([tubeMaterial]);
+
+	    tubeGeom.computeFaceNormals();
+	    for (var face in tubeGeom.faces) {
+	        tubeGeom.faces[face].materialIndex = 0;
+	    }
+	    var mesh = new THREE.Mesh(tubeGeom, meshFaceMaterial);
+
+	    return mesh;
 	};
 
 /***/ }

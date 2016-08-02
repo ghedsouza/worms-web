@@ -5,9 +5,10 @@ import Stats from '../node_modules/stats.js/build/stats.min.js';
 import {rad, assert, letter_index, V3} from './utils';
 import * as glass from './glass';
 import * as ground from './ground';
+import * as worm from './worm';
 
 
-console.log(Stats);
+const mousePos = {x: 0, y: 0};
 
 function onDocumentMouseMove( event )
 {
@@ -18,11 +19,23 @@ function onDocumentMouseMove( event )
     mousePos.x = Math.min(event.clientX, 500);
     mousePos.y = Math.min(event.clientY, 500);
 }
-const mousePos = {x: 0, y: 0};
+
+
+const timeZero = Date.now();
+const t = function() {
+    return Date.now() - timeZero;
+}
+const t_sec = function() {
+    return t()/1000;
+}
+
 
 function run() {
-    var $container = $('#container');
+    const $container = $('#container');
     const $debug = $('#debug');
+
+
+
     // set the scene size
     var WIDTH = 500,
         HEIGHT = 500;
@@ -45,25 +58,27 @@ function run() {
         );
     // the camera starts at 0,0,0 so pull it back
     camera.position.z = 10;
-    // camera.position.x = 1;
-    camera.position.y = 0;
-    scene.add(camera);
 
     renderer.setSize(WIDTH, HEIGHT);
+
     // attach the render-supplied DOM element
     $container.append(renderer.domElement);
 
     const mag_glass = glass.glass();
     const surface = ground.surface();
-
-    scene.add(mag_glass);
-    scene.add(surface);
+    const wormModel = worm.wormTest();
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
     pointLight.position.y = 50;
     pointLight.position.z = 130;
+
+    scene.add(camera);
     scene.add(pointLight);
+    scene.add(surface);
+    scene.add(mag_glass);
+    scene.add(wormModel);
+
 
     const stats = new Stats();
     stats.showPanel(0);
@@ -83,14 +98,22 @@ function run() {
         mag_glass.rotation.x = -rad(-45 + (yPercentage * 90));
         mag_glass.rotation.y = rad(-45 + (xPercentage * 90));
 
-        $debug.html('x: ' + mousePos.x + ', y: ' + mousePos.y);
+        $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
+
+        const worm_t = t_sec()/5;
+        wormModel.position.set(
+            worm_t, Math.sin(worm_t), 0
+            );
+        wormModel.rotation.z = Math.cos(worm_t) + rad(90);
+
         mag_glass.position.set(
             xMagPos, yMagPos, 3
             );
 
         renderer.render(scene, camera);
-        stats.end();
+
         requestAnimationFrame( animate );
+        stats.end();
     }
     requestAnimationFrame( animate );
 }

@@ -19,7 +19,7 @@ import * as colors from './colors';
 // (inner side - bottom)    |4           |6
 //                          +------------+
 //
-function ring() {
+export const ring = function() {
     var ring_geom = new THREE.Geometry();
 
     const segments = 20;
