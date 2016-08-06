@@ -125,6 +125,7 @@
 	    var mag_glass = glass.glass();
 	    var surface = ground.surface();
 	    var wormModel = worm.wormTest();
+	    var worm1 = new worm.Worm();
 
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
 	    pointLight.position.x = 10;
@@ -135,7 +136,8 @@
 	    scene.add(pointLight);
 	    scene.add(surface);
 	    scene.add(mag_glass);
-	    scene.add(wormModel);
+	    // scene.add(wormModel);
+	    scene.add(worm1.wormMesh);
 
 	    var stats = new _statsMin2.default();
 	    stats.showPanel(0);
@@ -160,6 +162,8 @@
 	        var worm_t = t_sec() / 5;
 	        wormModel.position.set(worm_t, Math.sin(worm_t), 0);
 	        wormModel.rotation.z = Math.cos(worm_t) + (0, _utils.rad)(90);
+
+	        worm1.update();
 
 	        mag_glass.position.set(xMagPos, yMagPos, 3);
 
@@ -52958,9 +52962,11 @@
 	    value: true
 	});
 	exports.assert = assert;
+	exports.time = time;
 	exports.rad = rad;
-	exports.letter_index = letter_index;
 	exports.V3 = V3;
+	exports.V2 = V2;
+	exports.letter_index = letter_index;
 
 	var _three = __webpack_require__(2);
 
@@ -52968,15 +52974,38 @@
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+	// Debug
+
 	function assert(condition, message) {
 	    if (!condition) {
 	        throw message || 'Assertion failed';
 	    }
 	}
 
+	// Time
+
+	// Return current time in seconds.
+	function time() {
+	    return Date.now() / 1000;
+	}
+
+	// Math
+
 	function rad(deg) {
 	    return deg * Math.PI / 180;
 	}
+
+	// Three.js helpers
+
+	function V3(x, y, z) {
+	    return new THREE.Vector3(x, y, z);
+	}
+
+	function V2(x, y) {
+	    return new THREE.Vector2(x, y);
+	}
+
+	// Strings
 
 	function letter_index(letter) {
 	    assert(letter.length === 1);
@@ -52985,10 +53014,6 @@
 	    var index = letter.charCodeAt(0) - 97;
 	    assert(index >= 0 && index <= 25);
 	    return index;
-	}
-
-	function V3(x, y, z) {
-	    return new THREE.Vector3(x, y, z);
 	}
 
 /***/ },
@@ -53201,7 +53226,13 @@
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.wormTest = undefined;
+	exports.Worm = exports.wormTest = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _jquery = __webpack_require__(1);
+
+	var _jquery2 = _interopRequireDefault(_jquery);
 
 	var _three = __webpack_require__(2);
 
@@ -53214,6 +53245,10 @@
 	var colors = _interopRequireWildcard(_colors);
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	var wormTest = exports.wormTest = function wormTest() {
 	    var tubeGeom = new THREE.CylinderGeometry(0.25, 0.25, 1, 8, 1);
@@ -53229,6 +53264,57 @@
 
 	    return mesh;
 	};
+
+	var Worm = exports.Worm = function () {
+	    function Worm() {
+	        _classCallCheck(this, Worm);
+
+	        this.timeZero = (0, _utils.time)();
+	        this.lastUpdate = 0;
+	        this.currentWayPoint = (0, _utils.V2)(0, 0);
+	        this.nextWayPoint = (0, _utils.V2)(5, 5);
+	        this.currentPosition = this.currentWayPoint;
+
+	        this.wormMesh = wormTest();
+	        this.wormMesh.position.set(this.currentPosition.x, this.currentPosition.y, 0);
+	    }
+
+	    _createClass(Worm, [{
+	        key: 'time',
+	        value: function time() {
+	            return (0, _utils.time)() - this.timeZero;
+	        }
+	    }, {
+	        key: 'update',
+	        value: function update() {
+	            var timeDelta = this.time() - this.lastUpdate;
+	            var speed = 0.1;
+
+	            var distanceLeft = this.currentPosition.distanceTo(this.nextWayPoint);
+
+	            var distanceToTravel = Math.min(distanceLeft, timeDelta * speed);
+
+	            var ratio = distanceLeft > 0 ? distanceToTravel / distanceLeft : 1;
+
+	            if (distanceLeft < 0.1 || this.time() > 5) {
+	                return;
+	            }
+
+	            var newPosition = this.currentPosition.lerp(this.nextWayPoint, ratio);
+
+	            console.log(", timeDelta: " + timeDelta + ", scale: " + speed + ", distanceLeft: " + distanceLeft + ", distanceToTravel: " + distanceToTravel + ", ratio: " + ratio + ", newPosition: " + newPosition);
+
+	            (0, _jquery2.default)("#debug2").html("worm: " + "<br>, timeDelta: " + timeDelta + "<br>, scale: " + speed + "<br>, distanceLeft: " + distanceLeft + "<br>, distanceToTravel: " + distanceToTravel + "<br>, ratio: " + ratio + "<br>, newPosition: " + newPosition + "");
+
+	            this.currentPosition = newPosition;
+
+	            this.wormMesh.position.set(this.currentPosition.x, this.currentPosition.y, 0);
+	            this.lastUpdate = this.time();
+	        }
+	    }]);
+
+	    return Worm;
+	}();
 
 /***/ }
 /******/ ]);

@@ -34,8 +34,6 @@ function run() {
     const $container = $('#container');
     const $debug = $('#debug');
 
-
-
     // set the scene size
     var WIDTH = 500,
         HEIGHT = 500;
@@ -67,6 +65,7 @@ function run() {
     const mag_glass = glass.glass();
     const surface = ground.surface();
     const wormModel = worm.wormTest();
+    const worm1 = new worm.Worm();
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
@@ -77,8 +76,8 @@ function run() {
     scene.add(pointLight);
     scene.add(surface);
     scene.add(mag_glass);
-    scene.add(wormModel);
-
+    // scene.add(wormModel);
+    scene.add(worm1.wormMesh);
 
     const stats = new Stats();
     stats.showPanel(0);
@@ -105,6 +104,8 @@ function run() {
             worm_t, Math.sin(worm_t), 0
             );
         wormModel.rotation.z = Math.cos(worm_t) + rad(90);
+
+        worm1.update();
 
         mag_glass.position.set(
             xMagPos, yMagPos, 3
