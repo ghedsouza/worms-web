@@ -2,13 +2,22 @@ import $ from '../node_modules/jquery/dist/jquery.js';
 import * as THREE from '../node_modules/three/build/three.js';
 import Stats from '../node_modules/stats.js/build/stats.min.js';
 
-import {rad, assert, letter_index, V3} from './utils';
+import {
+    rad,
+    assert,
+    letter_index,
+    V3,
+    V2,
+    time,
+} from './utils';
+
 import * as glass from './glass';
 import * as ground from './ground';
 import * as worm from './worm';
+import * as worm2 from './worm2';
 
 
-const mousePos = {x: 0, y: 0};
+const mousePos = V2(0,0);
 
 function onDocumentMouseMove( event )
 {
@@ -21,12 +30,9 @@ function onDocumentMouseMove( event )
 }
 
 
-const timeZero = Date.now();
+const timeZero = time();
 const t = function() {
-    return Date.now() - timeZero;
-}
-const t_sec = function() {
-    return t()/1000;
+    return time() - timeZero;
 }
 
 
@@ -66,6 +72,7 @@ function run() {
     const surface = ground.surface();
     const wormModel = worm.wormTest();
     const worm1 = new worm.Worm();
+    const wormB = new worm2.Worm();
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
@@ -77,7 +84,8 @@ function run() {
     scene.add(surface);
     scene.add(mag_glass);
     // scene.add(wormModel);
-    scene.add(worm1.wormMesh);
+    // scene.add(worm1.wormMesh);
+    scene.add(wormB.wormMesh);
 
     const stats = new Stats();
     stats.showPanel(0);
@@ -99,13 +107,14 @@ function run() {
 
         $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
 
-        const worm_t = t_sec()/5;
+        const worm_t = t()/5;
         wormModel.position.set(
             worm_t, Math.sin(worm_t), 0
             );
         wormModel.rotation.z = Math.cos(worm_t) + rad(90);
 
         worm1.update();
+        wormB.update();
 
         mag_glass.position.set(
             xMagPos, yMagPos, 3

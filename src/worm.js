@@ -34,8 +34,10 @@ export class Worm {
     constructor() {
         this.timeZero = time();
         this.lastUpdate = 0;
+
         this.currentWayPoint = V2(0,0);
-        this.nextWayPoint = V2(5,5);
+        this.nextWayPoint = V2(2,2);
+
         this.currentPosition = this.currentWayPoint;
 
         this.wormMesh = wormTest();
@@ -52,31 +54,56 @@ export class Worm {
 
     update() {
         const timeDelta = this.time() - this.lastUpdate;
-        const speed = 0.1;
+        const speed = 0.2;
 
         const distanceLeft = this.currentPosition.distanceTo(this.nextWayPoint);
 
-        const distanceToTravel = Math.min(distanceLeft, timeDelta * speed);
+        const distanceToTravel = Math.min(speed * timeDelta, distanceLeft);
 
         const ratio = distanceLeft > 0 ?
             distanceToTravel/distanceLeft : 1;
 
-        if (distanceLeft < 0.1 || this.time() > 5) {
+        if (distanceLeft < 0.1) {
+            this.currentWayPoint = this.nextWayPoint;
+            this.nextWayPoint = V2(-4 + Math.random()*8, -4 + Math.random()*8);
             return;
         }
 
-        const newPosition = this.currentPosition.lerp(
+        const newPosition = this.currentPosition.clone().lerp(
             this.nextWayPoint,
             ratio
             );
+        this.currentPosition = newPosition;
 
+        const v = this.nextWayPoint.clone().sub(this.currentWayPoint);
+        const vPerp = V2(-v.y, v.x).clone().normalize();
+
+        const currentDistance = this.currentWayPoint.distanceTo(this.currentPosition);
+        const totalDistance = this.currentWayPoint.distanceTo(this.nextWayPoint);
+        const xRatio = currentDistance/totalDistance;
+        const sinX = xRatio * (2*Math.PI);
+
+        const fPos = this.currentPosition.clone().addScaledVector(
+            vPerp,
+            Math.sin(sinX)
+            );
+
+        this.wormMesh.position.set(
+            fPos.x,
+            fPos.y,
+            0
+            );
+        this.wormMesh.rotation.z = v.angle() + rad(90) + (V2(1, Math.cos(sinX)).angle());
+        // debugger;
 
         console.log(", timeDelta: " + timeDelta +
             ", scale: " + speed +
             ", distanceLeft: " + distanceLeft +
             ", distanceToTravel: " + distanceToTravel +
             ", ratio: " + ratio +
-            ", newPosition: " + newPosition);
+            ", newPosition: " + newPosition,
+            ", fPos: " + fPos.x + ", " + fPos.y
+            );
 
         $("#debug2").html(
             "worm: " +
@@ -89,13 +116,7 @@ export class Worm {
             ""
             );
 
-        this.currentPosition = newPosition;
 
-        this.wormMesh.position.set(
-            this.currentPosition.x,
-            this.currentPosition.y,
-            0
-            );
         this.lastUpdate = this.time();
     }
 }

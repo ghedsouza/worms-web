@@ -72,11 +72,15 @@
 
 	var worm = _interopRequireWildcard(_worm);
 
+	var _worm2 = __webpack_require__(9);
+
+	var worm2 = _interopRequireWildcard(_worm2);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var mousePos = { x: 0, y: 0 };
+	var mousePos = (0, _utils.V2)(0, 0);
 
 	function onDocumentMouseMove(event) {
 	    // the following line would stop any other event handler from firing
@@ -87,12 +91,9 @@
 	    mousePos.y = Math.min(event.clientY, 500);
 	}
 
-	var timeZero = Date.now();
+	var timeZero = (0, _utils.time)();
 	var t = function t() {
-	    return Date.now() - timeZero;
-	};
-	var t_sec = function t_sec() {
-	    return t() / 1000;
+	    return (0, _utils.time)() - timeZero;
 	};
 
 	function run() {
@@ -126,6 +127,7 @@
 	    var surface = ground.surface();
 	    var wormModel = worm.wormTest();
 	    var worm1 = new worm.Worm();
+	    var wormB = new worm2.Worm();
 
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
 	    pointLight.position.x = 10;
@@ -137,7 +139,8 @@
 	    scene.add(surface);
 	    scene.add(mag_glass);
 	    // scene.add(wormModel);
-	    scene.add(worm1.wormMesh);
+	    // scene.add(worm1.wormMesh);
+	    scene.add(wormB.wormMesh);
 
 	    var stats = new _statsMin2.default();
 	    stats.showPanel(0);
@@ -159,11 +162,12 @@
 
 	        $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
 
-	        var worm_t = t_sec() / 5;
+	        var worm_t = t() / 5;
 	        wormModel.position.set(worm_t, Math.sin(worm_t), 0);
 	        wormModel.rotation.z = Math.cos(worm_t) + (0, _utils.rad)(90);
 
 	        worm1.update();
+	        wormB.update();
 
 	        mag_glass.position.set(xMagPos, yMagPos, 3);
 
@@ -52964,6 +52968,7 @@
 	exports.assert = assert;
 	exports.time = time;
 	exports.rad = rad;
+	exports.F3 = F3;
 	exports.V3 = V3;
 	exports.V2 = V2;
 	exports.letter_index = letter_index;
@@ -52996,6 +53001,10 @@
 	}
 
 	// Three.js helpers
+
+	function F3(i, j, k) {
+	    return new THREE.Face3(i, j, k);
+	}
 
 	function V3(x, y, z) {
 	    return new THREE.Vector3(x, y, z);
@@ -53271,8 +53280,10 @@
 
 	        this.timeZero = (0, _utils.time)();
 	        this.lastUpdate = 0;
+
 	        this.currentWayPoint = (0, _utils.V2)(0, 0);
-	        this.nextWayPoint = (0, _utils.V2)(5, 5);
+	        this.nextWayPoint = (0, _utils.V2)(2, 2);
+
 	        this.currentPosition = this.currentWayPoint;
 
 	        this.wormMesh = wormTest();
@@ -53288,28 +53299,161 @@
 	        key: 'update',
 	        value: function update() {
 	            var timeDelta = this.time() - this.lastUpdate;
-	            var speed = 0.1;
+	            var speed = 0.2;
 
 	            var distanceLeft = this.currentPosition.distanceTo(this.nextWayPoint);
 
-	            var distanceToTravel = Math.min(distanceLeft, timeDelta * speed);
+	            var distanceToTravel = Math.min(speed * timeDelta, distanceLeft);
 
 	            var ratio = distanceLeft > 0 ? distanceToTravel / distanceLeft : 1;
 
-	            if (distanceLeft < 0.1 || this.time() > 5) {
+	            if (distanceLeft < 0.1) {
+	                this.currentWayPoint = this.nextWayPoint;
+	                this.nextWayPoint = (0, _utils.V2)(-4 + Math.random() * 8, -4 + Math.random() * 8);
 	                return;
 	            }
 
-	            var newPosition = this.currentPosition.lerp(this.nextWayPoint, ratio);
+	            var newPosition = this.currentPosition.clone().lerp(this.nextWayPoint, ratio);
+	            this.currentPosition = newPosition;
 
-	            console.log(", timeDelta: " + timeDelta + ", scale: " + speed + ", distanceLeft: " + distanceLeft + ", distanceToTravel: " + distanceToTravel + ", ratio: " + ratio + ", newPosition: " + newPosition);
+	            var v = this.nextWayPoint.clone().sub(this.currentWayPoint);
+	            var vPerp = (0, _utils.V2)(-v.y, v.x).clone().normalize();
+
+	            var currentDistance = this.currentWayPoint.distanceTo(this.currentPosition);
+	            var totalDistance = this.currentWayPoint.distanceTo(this.nextWayPoint);
+	            var xRatio = currentDistance / totalDistance;
+	            var sinX = xRatio * (2 * Math.PI);
+
+	            var fPos = this.currentPosition.clone().addScaledVector(vPerp, Math.sin(sinX));
+
+	            this.wormMesh.position.set(fPos.x, fPos.y, 0);
+	            this.wormMesh.rotation.z = v.angle() + (0, _utils.rad)(90) + (0, _utils.V2)(1, Math.cos(sinX)).angle();
+	            // debugger;
+
+	            console.log(", timeDelta: " + timeDelta + ", scale: " + speed + ", distanceLeft: " + distanceLeft + ", distanceToTravel: " + distanceToTravel + ", ratio: " + ratio + ", newPosition: " + newPosition, ", fPos: " + fPos.x + ", " + fPos.y);
 
 	            (0, _jquery2.default)("#debug2").html("worm: " + "<br>, timeDelta: " + timeDelta + "<br>, scale: " + speed + "<br>, distanceLeft: " + distanceLeft + "<br>, distanceToTravel: " + distanceToTravel + "<br>, ratio: " + ratio + "<br>, newPosition: " + newPosition + "");
 
-	            this.currentPosition = newPosition;
-
-	            this.wormMesh.position.set(this.currentPosition.x, this.currentPosition.y, 0);
 	            this.lastUpdate = this.time();
+	        }
+	    }]);
+
+	    return Worm;
+	}();
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.Worm = exports.wormMesh = exports.wormGeom = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _jquery = __webpack_require__(1);
+
+	var _jquery2 = _interopRequireDefault(_jquery);
+
+	var _three = __webpack_require__(2);
+
+	var THREE = _interopRequireWildcard(_three);
+
+	var _utils = __webpack_require__(4);
+
+	var _colors = __webpack_require__(6);
+
+	var colors = _interopRequireWildcard(_colors);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var wormGeom = exports.wormGeom = function wormGeom() {
+	    var geom = new THREE.Geometry();
+	    var segHeight = 0.5;
+	    var segLength = 1;
+
+	    var segments = 2;
+
+	    for (var i = 0; i < segments + 1; i++) {
+	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, segHeight / 2)); // 0
+	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, segHeight / 2, segHeight / 2)); // 1
+	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, -segHeight / 2)); // 2
+	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, -segHeight / 2)); // 3
+	    }
+
+	    var _loop = function _loop(_i) {
+	        var start = _i * 4;
+	        function face(a, b, c) {
+	            return (0, _utils.F3)(start + a, start + b, start + c);
+	        }
+	        geom.faces.push(face(0, 5, 1));
+	        geom.faces.push(face(0, 4, 5));
+	        geom.faces.push(face(1, 7, 3));
+	        geom.faces.push(face(1, 5, 7));
+	        geom.faces.push(face(2, 3, 7));
+	        geom.faces.push(face(2, 7, 6));
+	        geom.faces.push(face(0, 2, 6));
+	        geom.faces.push(face(0, 6, 4));
+	    };
+
+	    for (var _i = 0; _i < segments; _i++) {
+	        _loop(_i);
+	    }
+
+	    return geom;
+	};
+
+	var wormMesh = exports.wormMesh = function wormMesh() {
+	    var geom = wormGeom();
+
+	    var tubeMaterial = new THREE.MeshPhongMaterial({ color: colors.silver });
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([tubeMaterial]);
+
+	    geom.computeFaceNormals();
+	    for (var face in geom.faces) {
+	        geom.faces[face].materialIndex = 0;
+	    }
+	    var mesh = new THREE.Mesh(geom, meshFaceMaterial);
+
+	    return mesh;
+	};
+
+	var Worm = exports.Worm = function () {
+	    function Worm() {
+	        _classCallCheck(this, Worm);
+
+	        this.wormMesh = wormMesh();
+	    }
+
+	    _createClass(Worm, [{
+	        key: 'update',
+	        value: function update() {
+	            var v = this.wormMesh.geometry.vertices;
+	            var midPoint1 = v[0].clone().lerp(v[1], 0.5);
+	            var midPoint2 = v[2].clone().lerp(v[3], 0.5);
+
+	            var rotate = function rotate(point, center, angle) {
+	                return point.clone().add(center.clone().negate()).applyAxisAngle((0, _utils.V3)(0, 0, 1), angle).add(center);
+	            };
+
+	            v[0].fromArray(rotate(v[0], midPoint1, (0, _utils.rad)(0.1)).toArray());
+	            v[1].fromArray(rotate(v[1], midPoint1, (0, _utils.rad)(0.1)).toArray());
+
+	            v[2].fromArray(rotate(v[2], midPoint1, (0, _utils.rad)(0.1)).toArray());
+	            v[3].fromArray(rotate(v[3], midPoint1, (0, _utils.rad)(0.1)).toArray());
+
+	            // for (let i=0; i<4; i++) {
+	            //     this.wormMesh.geometry.vertices[i].add(V3(-0.1, 0.1, 0));
+	            // }
+
+	            this.wormMesh.geometry.verticesNeedUpdate = true;
 	        }
 	    }]);
 

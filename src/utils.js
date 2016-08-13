@@ -23,6 +23,10 @@ export function rad(deg) {
 
 // Three.js helpers
 
+export function F3(i, j, k) {
+    return new THREE.Face3(i, j, k);
+}
+
 export function V3(x,y,z) {
     return new THREE.Vector3(x,y,z);
 }
