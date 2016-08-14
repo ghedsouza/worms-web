@@ -53374,39 +53374,37 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+	var slices = 12;
+	var segments = 1;
+
 	var wormGeom = exports.wormGeom = function wormGeom() {
 	    var geom = new THREE.Geometry();
 	    var segHeight = 0.5;
 	    var segLength = 1;
 
-	    var segments = 2;
-
+	    // Vertex locations (dynamic)
 	    for (var i = 0; i < segments + 1; i++) {
-	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, segHeight / 2)); // 0
-	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, segHeight / 2, segHeight / 2)); // 1
-	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, -segHeight / 2)); // 2
-	        geom.vertices.push((0, _utils.V3)(0 + i * segLength, -segHeight / 2, -segHeight / 2)); // 3
-	    }
-
-	    var _loop = function _loop(_i) {
-	        var start = _i * 4;
-	        function face(a, b, c) {
-	            return (0, _utils.F3)(start + a, start + b, start + c);
+	        var needle = (0, _utils.V3)(0, segHeight, 0);
+	        for (var j = 0; j < slices; j++) {
+	            var vert = needle.clone().add((0, _utils.V3)(i * segLength, 0, 0));
+	            geom.vertices.push(vert);
+	            needle.applyAxisAngle((0, _utils.V3)(1, 0, 0), (0, _utils.rad)(360 / slices));
 	        }
-	        geom.faces.push(face(0, 5, 1));
-	        geom.faces.push(face(0, 4, 5));
-	        geom.faces.push(face(1, 7, 3));
-	        geom.faces.push(face(1, 5, 7));
-	        geom.faces.push(face(2, 3, 7));
-	        geom.faces.push(face(2, 7, 6));
-	        geom.faces.push(face(0, 2, 6));
-	        geom.faces.push(face(0, 6, 4));
-	    };
-
-	    for (var _i = 0; _i < segments; _i++) {
-	        _loop(_i);
 	    }
 
+	    // Face definitions: (fixed)
+	    for (var _i = 0; _i < segments; _i++) {
+	        var start = _i * slices;
+
+	        for (var _j = 0; _j < slices; _j++) {
+	            var a = start + _j;
+	            var b = start + (_j + 1) % slices;
+	            var c = a + slices;
+	            var d = b + slices;
+	            geom.faces.push((0, _utils.F3)(a, b, d));
+	            geom.faces.push((0, _utils.F3)(a, d, c));
+	        }
+	    }
 	    return geom;
 	};
 
@@ -53421,7 +53419,6 @@
 	        geom.faces[face].materialIndex = 0;
 	    }
 	    var mesh = new THREE.Mesh(geom, meshFaceMaterial);
-
 	    return mesh;
 	};
 
@@ -53430,29 +53427,40 @@
 	        _classCallCheck(this, Worm);
 
 	        this.wormMesh = wormMesh();
+	        this.skel = [{
+	            location: (0, _utils.V3)(0, 0, 0),
+	            direction: (0, _utils.V3)(1, 0, 0)
+	        }, {
+	            location: (0, _utils.V3)(0.5, 0, 0),
+	            direction: (0, _utils.V3)(1, 0, 0)
+	        }];
 	    }
 
 	    _createClass(Worm, [{
 	        key: 'update',
 	        value: function update() {
-	            var v = this.wormMesh.geometry.vertices;
-	            var midPoint1 = v[0].clone().lerp(v[1], 0.5);
-	            var midPoint2 = v[2].clone().lerp(v[3], 0.5);
-
 	            var rotate = function rotate(point, center, angle) {
 	                return point.clone().add(center.clone().negate()).applyAxisAngle((0, _utils.V3)(0, 0, 1), angle).add(center);
 	            };
+	            var midPoint = function midPoint(p1, p2) {
+	                return p1.clone().lerp(p2, 0.5);
+	            };
 
-	            v[0].fromArray(rotate(v[0], midPoint1, (0, _utils.rad)(0.1)).toArray());
-	            v[1].fromArray(rotate(v[1], midPoint1, (0, _utils.rad)(0.1)).toArray());
+	            var v = this.wormMesh.geometry.vertices;
 
-	            v[2].fromArray(rotate(v[2], midPoint1, (0, _utils.rad)(0.1)).toArray());
-	            v[3].fromArray(rotate(v[3], midPoint1, (0, _utils.rad)(0.1)).toArray());
+	            var rings = segments + 1;
+	            var angle = 0.2;
 
-	            // for (let i=0; i<4; i++) {
-	            //     this.wormMesh.geometry.vertices[i].add(V3(-0.1, 0.1, 0));
-	            // }
+	            for (var ring = 0; ring < rings; ring++) {
+	                var start = ring * slices;
+	                var mid = midPoint(v[start], v[start + slices / 2]);
 
+	                for (var p = 0; p < slices; p++) {
+	                    v[start + p].fromArray(rotate(v[start + p], mid, (0, _utils.rad)(angle)).add((0, _utils.V3)(-0.0, 0.0, 0)).toArray());
+	                }
+
+	                angle /= 2;
+	            }
 	            this.wormMesh.geometry.verticesNeedUpdate = true;
 	        }
 	    }]);
