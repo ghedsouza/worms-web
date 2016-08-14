@@ -105,16 +105,16 @@ export class Worm {
         //     ", fPos: " + fPos.x + ", " + fPos.y
         //     );
 
-        $("#debug2").html(
-            "worm: " +
-            "<br>, timeDelta: " + timeDelta +
-            "<br>, scale: " + speed +
-            "<br>, distanceLeft: " + distanceLeft +
-            "<br>, distanceToTravel: " + distanceToTravel +
-            "<br>, ratio: " + ratio +
-            "<br>, newPosition: " + newPosition +
-            ""
-            );
+        // $("#debug2").html(
+        //     "worm: " +
+        //     "<br>, timeDelta: " + timeDelta +
+        //     "<br>, scale: " + speed +
+        //     "<br>, distanceLeft: " + distanceLeft +
+        //     "<br>, distanceToTravel: " + distanceToTravel +
+        //     "<br>, ratio: " + ratio +
+        //     "<br>, newPosition: " + newPosition +
+        //     ""
+        //     );
 
 
         this.lastUpdate = this.time();

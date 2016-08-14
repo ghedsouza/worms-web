@@ -105,7 +105,7 @@ function run() {
         mag_glass.rotation.x = -rad(-45 + (yPercentage * 90));
         mag_glass.rotation.y = rad(-45 + (xPercentage * 90));
 
-        $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
+        // $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
 
         const worm_t = t()/5;
         wormModel.position.set(
