@@ -96,14 +96,14 @@ export class Worm {
         this.wormMesh.rotation.z = v.angle() + rad(90) + (V2(1, Math.cos(sinX)).angle());
         // debugger;
 
-        console.log(", timeDelta: " + timeDelta +
-            ", scale: " + speed +
-            ", distanceLeft: " + distanceLeft +
-            ", distanceToTravel: " + distanceToTravel +
-            ", ratio: " + ratio +
-            ", newPosition: " + newPosition,
-            ", fPos: " + fPos.x + ", " + fPos.y
-            );
+        // console.log(", timeDelta: " + timeDelta +
+        //     ", scale: " + speed +
+        //     ", distanceLeft: " + distanceLeft +
+        //     ", distanceToTravel: " + distanceToTravel +
+        //     ", ratio: " + ratio +
+        //     ", newPosition: " + newPosition,
+        //     ", fPos: " + fPos.x + ", " + fPos.y
+        //     );
 
         $("#debug2").html(
             "worm: " +

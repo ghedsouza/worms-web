@@ -53330,7 +53330,14 @@
 	            this.wormMesh.rotation.z = v.angle() + (0, _utils.rad)(90) + (0, _utils.V2)(1, Math.cos(sinX)).angle();
 	            // debugger;
 
-	            console.log(", timeDelta: " + timeDelta + ", scale: " + speed + ", distanceLeft: " + distanceLeft + ", distanceToTravel: " + distanceToTravel + ", ratio: " + ratio + ", newPosition: " + newPosition, ", fPos: " + fPos.x + ", " + fPos.y);
+	            // console.log(", timeDelta: " + timeDelta +
+	            //     ", scale: " + speed +
+	            //     ", distanceLeft: " + distanceLeft +
+	            //     ", distanceToTravel: " + distanceToTravel +
+	            //     ", ratio: " + ratio +
+	            //     ", newPosition: " + newPosition,
+	            //     ", fPos: " + fPos.x + ", " + fPos.y
+	            //     );
 
 	            (0, _jquery2.default)("#debug2").html("worm: " + "<br>, timeDelta: " + timeDelta + "<br>, scale: " + speed + "<br>, distanceLeft: " + distanceLeft + "<br>, distanceToTravel: " + distanceToTravel + "<br>, ratio: " + ratio + "<br>, newPosition: " + newPosition + "");
 
@@ -53374,7 +53381,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var slices = 12;
+	var slices = 8;
 	var segments = 1;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
@@ -53426,42 +53433,81 @@
 	    function Worm() {
 	        _classCallCheck(this, Worm);
 
+	        this.timeZero = (0, _utils.time)();
+	        this.lastUpdate = this.time();
+	        this.segHeight = 0.5;
+	        this.segLength = 1;
 	        this.wormMesh = wormMesh();
 	        this.skel = [{
 	            location: (0, _utils.V3)(0, 0, 0),
-	            direction: (0, _utils.V3)(1, 0, 0)
+	            direction: (0, _utils.V3)(0, 1, 0)
 	        }, {
-	            location: (0, _utils.V3)(0.5, 0, 0),
-	            direction: (0, _utils.V3)(1, 0, 0)
+	            location: (0, _utils.V3)(0, 1, 0),
+	            direction: (0, _utils.V3)(0, 1, 0)
 	        }];
 	    }
 
 	    _createClass(Worm, [{
+	        key: 'time',
+	        value: function time() {
+	            return (0, _utils.time)() - this.timeZero;
+	        }
+	    }, {
 	        key: 'update',
 	        value: function update() {
+	            var timeDelta = this.time() - this.lastUpdate;
+
 	            var rotate = function rotate(point, center, angle) {
 	                return point.clone().add(center.clone().negate()).applyAxisAngle((0, _utils.V3)(0, 0, 1), angle).add(center);
 	            };
 	            var midPoint = function midPoint(p1, p2) {
 	                return p1.clone().lerp(p2, 0.5);
 	            };
-
 	            var v = this.wormMesh.geometry.vertices;
+	            var setVertex = function setVertex(i, vert) {
+	                v[i].fromArray(vert.toArray());
+	            };
 
 	            var rings = segments + 1;
 	            var angle = 0.2;
 
-	            for (var ring = 0; ring < rings; ring++) {
-	                var start = ring * slices;
-	                var mid = midPoint(v[start], v[start + slices / 2]);
-
-	                for (var p = 0; p < slices; p++) {
-	                    v[start + p].fromArray(rotate(v[start + p], mid, (0, _utils.rad)(angle)).add((0, _utils.V3)(-0.0, 0.0, 0)).toArray());
-	                }
-
-	                angle /= 2;
+	            if (this.skel[0].location.y > -3) {
+	                this.skel[0].location.y -= Math.abs(timeDelta * 0.3);
 	            }
+
+	            var dist = this.skel[1].location.distanceTo(this.skel[0].location);
+	            var diff = Math.max(0, dist - 1);
+
+	            var speed = 0.9;
+	            var move = Math.pow(diff, 2) * diff;
+
+	            this.skel[1].location.lerp(this.skel[0].location, move / dist);
+
+	            for (var ring = 0; ring < rings; ring++) {
+	                var skel = this.skel[ring];
+	                var needle = (0, _utils.V3)(0, 0, this.segHeight);
+	                for (var j = 0; j < slices; j++) {
+	                    var vert = needle.clone().add(skel.location);
+	                    setVertex(ring * slices + j, vert);
+
+	                    needle.applyAxisAngle(skel.direction, (0, _utils.rad)(360 / slices));
+	                }
+	            }
+
+	            // for (let ring = 0; ring < rings; ring++) {
+	            //     const start = ring * slices;
+	            //     const mid = midPoint(v[start], v[start + slices/2]);
+
+	            //     for (let p = 0; p < slices; p++) {
+	            //         v[start + p].fromArray( rotate(v[start + p], mid, rad(angle)).add(
+	            //             V3(-0.0, 0.0, 0)
+	            //             ).toArray());
+	            //     }
+
+	            //     angle /= 2;
+	            // }
 	            this.wormMesh.geometry.verticesNeedUpdate = true;
+	            this.lastUpdate = this.time();
 	        }
 	    }]);
 

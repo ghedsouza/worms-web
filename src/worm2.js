@@ -12,7 +12,7 @@ import {
 } from './utils';
 import * as colors from './colors';
 
-const slices = 12;
+const slices = 8;
 const segments = 1;
 
 export const wormGeom = function() {
@@ -63,44 +63,80 @@ export const wormMesh = function() {
 
 export class Worm {
     constructor() {
+        this.timeZero = time();
+        this.lastUpdate = this.time();
+        this.segHeight = 0.5;
+        this.segLength = 1;
         this.wormMesh = wormMesh();
         this.skel = [
             {
                 location: V3(0,0,0),
-                direction: V3(1,0,0),
+                direction: V3(0,1,0),
             },
             {
-                location: V3(0.5,0,0),
-                direction: V3(1,0,0),
+                location: V3(0,1,0),
+                direction: V3(0,1,0),
             },
         ]
     }
 
+    time() {
+        return (time() - this.timeZero);
+    }
+
     update() {
+        const timeDelta = this.time() - this.lastUpdate;
+
         const rotate = function(point, center, angle) {
             return point.clone().add(center.clone().negate()).applyAxisAngle(V3(0,0,1), angle).add(center);
         }
         const midPoint = function(p1, p2) {
             return p1.clone().lerp(p2, 0.5);
         }
-
         const v = this.wormMesh.geometry.vertices;
+        const setVertex = function(i, vert) {
+            v[i].fromArray( vert.toArray() );
+        }
 
         const rings = segments + 1;
         let angle = 0.2;
 
-        for (let ring = 0; ring < rings; ring++) {
-            const start = ring * slices;
-            const mid = midPoint(v[start], v[start + slices/2]);
-
-            for (let p = 0; p < slices; p++) {
-                v[start + p].fromArray( rotate(v[start + p], mid, rad(angle)).add(
-                    V3(-0.0, 0.0, 0)
-                    ).toArray());
-            }
-
-            angle /= 2;
+        if (this.skel[0].location.y > -3) {
+            this.skel[0].location.y -= Math.abs((timeDelta * 0.3));
         }
+
+        const dist = this.skel[1].location.distanceTo(this.skel[0].location);
+        const diff = Math.max(0, dist-1);
+
+        const move = Math.pow(diff, 2) * diff;
+
+        this.skel[1].location.lerp(this.skel[0].location, (move/dist));
+
+
+        for (let ring=0; ring<rings; ring++) {
+            const skel = this.skel[ring];
+            const needle = V3(0, 0, this.segHeight);
+            for (let j = 0; j < slices; j++) {
+                const vert = needle.clone().add( skel.location );
+                setVertex(ring*slices + j, vert);
+
+                needle.applyAxisAngle(skel.direction, rad(360/slices));
+            }
+        }
+
+        // for (let ring = 0; ring < rings; ring++) {
+        //     const start = ring * slices;
+        //     const mid = midPoint(v[start], v[start + slices/2]);
+
+        //     for (let p = 0; p < slices; p++) {
+        //         v[start + p].fromArray( rotate(v[start + p], mid, rad(angle)).add(
+        //             V3(-0.0, 0.0, 0)
+        //             ).toArray());
+        //     }
+
+        //     angle /= 2;
+        // }
         this.wormMesh.geometry.verticesNeedUpdate = true;
+        this.lastUpdate = this.time();
     }
 }
