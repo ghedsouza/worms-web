@@ -53381,7 +53381,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var slices = 8;
+	var slices = 12;
 	var segments = 1;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
@@ -53472,16 +53472,38 @@
 	            var angle = 0.2;
 
 	            if (this.skel[0].location.y > -3) {
-	                this.skel[0].location.y -= Math.abs(timeDelta * 0.3);
+	                this.skel[0].location.y -= Math.abs(timeDelta * 0.5);
+	                this.skel[0].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), (0, _utils.rad)(timeDelta * 6));
 	            }
 
-	            var dist = this.skel[1].location.distanceTo(this.skel[0].location);
-	            var diff = Math.max(0, dist - 1);
+	            var target = this.skel[0].location.clone().add(this.skel[0].direction.clone().setLength(this.segLength));
 
-	            var speed = 0.9;
+	            console.log("target: ", target.x, target.y, target.z);
+
+	            var dist = this.skel[1].location.distanceTo(target);
+	            var diff = dist;
 	            var move = Math.pow(diff, 2) * diff;
 
-	            this.skel[1].location.lerp(this.skel[0].location, move / dist);
+	            if (isNaN(dist)) debugger;
+
+	            console.log("to move: ", dist, diff, move);
+
+	            var ratio = dist > 0 ? move / dist : 0;
+	            if (isNaN(ratio)) {
+	                debugger;
+	            }
+
+	            this.skel[1].location.lerp(target, ratio);
+	            if (isNaN(this.skel[1].location.x)) {
+	                debugger;
+	            }
+
+	            var angleDiff = this.skel[1].direction.angleTo(this.skel[0].direction);
+
+	            var moveAngle = Math.pow(angleDiff, 10);
+	            console.log(moveAngle);
+
+	            this.skel[1].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), angleDiff);
 
 	            for (var ring = 0; ring < rings; ring++) {
 	                var skel = this.skel[ring];
@@ -53508,6 +53530,7 @@
 	            // }
 	            this.wormMesh.geometry.verticesNeedUpdate = true;
 	            this.lastUpdate = this.time();
+	            this.wormMesh.geometry.computeFaceNormals();
 	        }
 	    }]);
 

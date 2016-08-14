@@ -12,7 +12,7 @@ import {
 } from './utils';
 import * as colors from './colors';
 
-const slices = 8;
+const slices = 12;
 const segments = 1;
 
 export const wormGeom = function() {
@@ -102,16 +102,43 @@ export class Worm {
         let angle = 0.2;
 
         if (this.skel[0].location.y > -3) {
-            this.skel[0].location.y -= Math.abs((timeDelta * 0.3));
+            this.skel[0].location.y -= Math.abs((timeDelta * 0.5));
+            this.skel[0].direction.applyAxisAngle(V3(0,0,1), rad(timeDelta * 6));
         }
 
-        const dist = this.skel[1].location.distanceTo(this.skel[0].location);
-        const diff = Math.max(0, dist-1);
+        const target = this.skel[0].location.clone().add(
+            this.skel[0].direction.clone().setLength(this.segLength)
+            );
 
+        console.log("target: ", target.x, target.y, target.z);
+
+        const dist = this.skel[1].location.distanceTo(target);
+        const diff = dist;
         const move = Math.pow(diff, 2) * diff;
 
-        this.skel[1].location.lerp(this.skel[0].location, (move/dist));
+        if (isNaN(dist))
+            debugger;
 
+        console.log("to move: ", dist, diff, move);
+
+        const ratio = dist > 0 ? move/dist : 0;
+        if (isNaN(ratio)) {
+            debugger;
+        }
+
+        this.skel[1].location.lerp(target, ratio);
+        if (isNaN(this.skel[1].location.x)) {
+            debugger;
+        }
+
+
+        const angleDiff = this.skel[1].direction.angleTo(this.skel[0].direction);
+
+        const moveAngle = Math.pow(angleDiff, 10);
+        console.log(moveAngle);
+
+
+        this.skel[1].direction.applyAxisAngle(V3(0,0,1), angleDiff);
 
         for (let ring=0; ring<rings; ring++) {
             const skel = this.skel[ring];
@@ -138,5 +165,6 @@ export class Worm {
         // }
         this.wormMesh.geometry.verticesNeedUpdate = true;
         this.lastUpdate = this.time();
+        this.wormMesh.geometry.computeFaceNormals();
     }
 }
