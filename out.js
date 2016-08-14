@@ -53381,7 +53381,7 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	var slices = 12;
+	var slices = 16;
 	var segments = 1;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
@@ -53455,6 +53455,7 @@
 	    }, {
 	        key: 'update',
 	        value: function update() {
+	            var currentTime = this.time();
 	            var timeDelta = this.time() - this.lastUpdate;
 
 	            var rotate = function rotate(point, center, angle) {
@@ -53473,12 +53474,23 @@
 
 	            if (this.skel[0].location.y > -3) {
 	                this.skel[0].location.y -= Math.abs(timeDelta * 0.5);
-	                this.skel[0].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), (0, _utils.rad)(timeDelta * 6));
+	                // this.skel[0].direction.applyAxisAngle(V3(0,0,1), rad(timeDelta * 6));
 	            }
 
 	            var target = this.skel[0].location.clone().add(this.skel[0].direction.clone().setLength(this.segLength));
 
 	            console.log("target: ", target.x, target.y, target.z);
+
+	            var alpha = 0.2,
+	                beta = 2;
+
+	            var f = function f(t) {
+	                return Math.exp(-alpha * t) * Math.cos(beta * currentTime);
+	            };
+
+	            var current = this.skel[1].location.clone();
+	            var dir = current.clone().sub(target);
+	            var newLoc = target.clone().add(dir.multiplyScalar(f(timeDelta)));
 
 	            var dist = this.skel[1].location.distanceTo(target);
 	            var diff = dist;
@@ -53494,13 +53506,16 @@
 	            }
 
 	            this.skel[1].location.lerp(target, ratio);
+
 	            if (isNaN(this.skel[1].location.x)) {
 	                debugger;
 	            }
 
+	            this.skel[1].location = newLoc;
+
 	            var angleDiff = this.skel[1].direction.angleTo(this.skel[0].direction);
 
-	            var moveAngle = Math.pow(angleDiff, 10);
+	            var moveAngle = angleDiff / 2; // Math.pow(angleDiff, 10);
 	            console.log(moveAngle);
 
 	            this.skel[1].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), angleDiff);
