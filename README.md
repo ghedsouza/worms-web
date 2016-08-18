@@ -26,3 +26,4 @@ The game code is all in `src` and written in [ES6](http://www.ecma-international
 
 - https://stemkoski.github.io/Three.js/ (has refraction example)
 - http://asciiflow.com/ (convert diagrams to ascii)
+- http://ghostinthecode.net/2016/08/17/fire.html (fire simulation guide)
