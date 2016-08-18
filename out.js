@@ -53398,7 +53398,7 @@
 	}
 
 	var slices = 8;
-	var segments = 1;
+	var segments = 3;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
 	    var geom = new THREE.Geometry();
@@ -53462,7 +53462,7 @@
 	var bInit = 15;
 	var c = 100;
 	var maxDistance = 2;
-	var environment = { heat: 2, strongDistance: bobRad * 20, gravity: 1000 };
+	var environment = { heat: 0, strongDistance: bobRad * 20, gravity: 1000 };
 
 	// function V3(x,y,z){ return new THREE.Vector3(x,y,z);}
 	function V4(x, y, z, w) {
@@ -53534,10 +53534,10 @@
 	    var disp = (0, _utils.V3)(0, 0, 0).subVectors(ppos, qpos);
 	    var dist = disp.length;
 
-	    // if (dist > maxDistance){
-	    //     disp.multiplyScalar(maxDistance/(dist+1));
-	    //     ppos.addVectors(qpos, disp);
-	    // }
+	    if (dist > maxDistance) {
+	        disp.multiplyScalar(maxDistance / (dist + 1));
+	        ppos.addVectors(qpos, disp);
+	    }
 
 	    return ppos;
 	}
@@ -53580,9 +53580,9 @@
 	    var vel = (0, _utils.V3)(vx + environment.heat * (0.5 - Math.random()), vy + environment.heat * (0.5 - Math.random()), vz + environment.heat * (0.5 - Math.random()));
 	    var speed = vel.length();
 
-	    // if (speed > c){
-	    //     vel.multiplyScalar(c/(speed+1));
-	    // }
+	    if (speed > c) {
+	        vel.multiplyScalar(c / (speed + 1));
+	    }
 
 	    return vel;
 	}
@@ -53602,13 +53602,13 @@
 	                position: (0, _utils.V3)(0, i * this.segLength, 0),
 	                direction: (0, _utils.V3)(0, 1, 0),
 	                velocity: (0, _utils.V3)(0, 0, 0),
-	                m: 500,
-	                k: 700,
-	                b: 15
+	                m: 45,
+	                k: 10,
+	                b: 30
 	            });
 	        }
 
-	        this.skel[0].velocity = (0, _utils.V3)(0, -0.1, 0);
+	        this.skel[0].velocity = (0, _utils.V3)(0, -0.3, 0);
 
 	        this.wormMesh = wormMesh();
 	        this.clock = new THREE.Clock();
@@ -53634,6 +53634,9 @@
 	            // Update Head (special case):
 	            if (this.skel[0].position.y > -3) {
 	                this.skel[0].position.add(this.skel[0].velocity.clone().multiplyScalar(timeDelta));
+	                this.skel[0].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), (0, _utils.rad)(timeDelta * 6));
+	            } else {
+	                this.skel[0].velocity = (0, _utils.V3)(0, 0, 0);
 	            }
 
 	            // Update rest of skeleton:
@@ -53655,6 +53658,12 @@
 
 	                alice.velocity = updateVelocity(alice, bob, timeDelta);
 	                alice.position = updatePosition(alice, bob, timeDelta);
+
+	                var angleDiff = this.skel[ring].direction.angleTo(this.skel[targetIndex].direction);
+
+	                var moveAngle = angleDiff / 2; // Math.pow(angleDiff, 10);
+
+	                this.skel[ring].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), angleDiff);
 	            }
 
 	            for (var _ring = 0; _ring < this.rings; _ring++) {
