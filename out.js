@@ -53397,13 +53397,11 @@
 	    }
 	}
 
-	var slices = 12;
-	var segments = 3;
+	var slices = 8;
+	var segments = 1;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
 	    var geom = new THREE.Geometry();
-	    var segHeight = 0.5;
-	    var segLength = 1;
 
 	    // Vertex locations (dynamic)
 	    // These will get updated later.
@@ -53413,18 +53411,17 @@
 	        }
 	    }
 
-	    // Face definitions: (fixed)
-
+	    // Face definitions: (static)
 	    for (var _i = 0; _i < segments; _i++) {
 	        var start = _i * slices;
 
 	        for (var _j = 0; _j < slices; _j++) {
 	            var a = start + _j;
 	            var b = start + (_j + 1) % slices;
-	            var c = a + slices;
+	            var _c = a + slices;
 	            var d = b + slices;
 	            geom.faces.push((0, _utils.F3)(a, b, d));
-	            geom.faces.push((0, _utils.F3)(a, d, c));
+	            geom.faces.push((0, _utils.F3)(a, d, _c));
 	        }
 	    }
 
@@ -53441,12 +53438,12 @@
 	var wormMesh = exports.wormMesh = function wormMesh() {
 	    var geom = wormGeom();
 
-	    var tubeMaterial = new THREE.MeshPhongMaterial({
+	    var wormMaterial = new THREE.MeshPhongMaterial({
 	        color: colors.silver,
 	        specular: 0x05aa05,
 	        shininess: 100
 	    });
-	    var meshFaceMaterial = new THREE.MeshFaceMaterial([tubeMaterial]);
+	    var meshFaceMaterial = new THREE.MeshFaceMaterial([wormMaterial]);
 
 	    geom.computeFaceNormals();
 	    for (var face in geom.faces) {
@@ -53456,6 +53453,136 @@
 	    return mesh;
 	};
 
+	var aliceRad = 9,
+	    bobRad = 10,
+	    carlRad = 9.5,
+	    eveRad = 8.5;
+	var mInit = 500;
+	var kInit = 700;
+	var bInit = 15;
+	var c = 100;
+	var maxDistance = 200;
+	var environment = { heat: 2, strongDistance: bobRad * 20, gravity: 1000 };
+
+	// function V3(x,y,z){ return new THREE.Vector3(x,y,z);}
+	function V4(x, y, z, w) {
+	    return new THREE.Vector4(x, y, z, w);
+	}
+	// function F3(x,y,z){ return new THREE.Face3(x,y,z);}
+
+	function log(check) {
+	    window.console.log(check);
+	}
+	function dist3(x1, y1, z1, x2, y2, z2) {
+	    return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
+	}
+	function distV3(V3a, V3b) {
+	    var vx = V3a.x,
+	        vy = V3a.y,
+	        vz = V3a.z;
+	    var ux = V3b.x,
+	        uy = V3b.y,
+	        uz = V3b.z;
+	    return Math.sqrt((vx - ux) * (vx - ux) + (vy - uy) * (vy - uy) + (vz - uz) * (vz - uz));
+	}
+
+	function getC0(m, k, b, delta) {
+	    return 1 - k * delta * delta / (2 * m);
+	}
+	function getC1(m, k, b, delta) {
+	    return k * delta * delta / (2 * m);
+	}
+	function getC2(m, k, b, delta) {
+	    return delta - b * delta * delta / (2 * m);
+	}
+	function getC3(m, k, b, delta) {
+	    return b * delta * delta / (2 * m);
+	}
+	function getC4(m, k, b, delta) {
+	    return -k * delta / m;
+	}
+	function getC5(m, k, b, delta) {
+	    return k * delta / m;
+	}
+	function getC6(m, k, b, delta) {
+	    return 1 - b * delta / m;
+	}
+	function getC7(m, k, b, delta) {
+	    return b * delta / m;
+	}
+
+	function updatePosition(p, q, delta) {
+	    //var c0, c1, c2, c3;
+	    var c0 = getC0(p.m, p.k, p.b, delta);
+	    var c1 = getC1(p.m, p.k, p.b, delta);
+	    var c2 = getC2(p.m, p.k, p.b, delta);
+	    var c3 = getC3(p.m, p.k, p.b, delta);
+
+	    var ppx = p.position.x,
+	        ppy = p.position.y,
+	        ppz = p.position.z;
+	    var qqx = q.position.x,
+	        qqy = q.position.y,
+	        qqz = q.position.z;
+
+	    var px = c0 * ppx + c1 * qqx + c2 * p.velocity.x + c3 * q.velocity.x;
+	    var py = c0 * ppy + c1 * qqy + c2 * p.velocity.y + c3 * q.velocity.y;
+	    var pz = c0 * ppz + c1 * qqz + c2 * p.velocity.z + c3 * q.velocity.z;
+
+	    var ppos = (0, _utils.V3)(px, py, pz);
+	    var qpos = q.position.clone();
+	    var disp = (0, _utils.V3)(0, 0, 0).subVectors(ppos, qpos);
+	    var dist = disp.length;
+	    if (dist > maxDistance) {
+	        disp.multiplyScalar(maxDistance / (dist + 1));
+	        ppos.addVectors(qpos, disp);
+	    }
+	    return ppos;
+	}
+
+	function updateVelocity(p, q, delta) {
+	    var c4, c5, c6, c7;
+
+	    var ppx = p.position.x,
+	        ppy = p.position.y,
+	        ppz = p.position.z;
+	    var ppvx = p.velocity.x,
+	        ppvy = p.velocity.y,
+	        ppvz = p.velocity.z;
+	    var qqx = q.position.x,
+	        qqy = q.position.y,
+	        qqz = q.position.z;
+	    var vx, vy, vz, velDelta, rad;
+	    var distance = dist3(ppx, ppy, ppz, qqx, qqy, qqz);
+
+	    if (true) {
+	        c4 = getC4(p.m, p.k, p.b, delta);
+	        c5 = getC5(p.m, p.k, p.b, delta);
+	        c6 = getC6(p.m, p.k, p.b, delta);
+	        c7 = getC7(p.m, p.k, p.b, delta);
+
+	        vx = c4 * ppx + c5 * qqx + c6 * ppvx + c7 * q.velocity.x;
+	        vy = c4 * ppy + c5 * qqy + c6 * ppvy + c7 * q.velocity.y;
+	        vz = c4 * ppz + c5 * qqz + c6 * ppvz + c7 * q.velocity.z;
+	    } else {
+	        velDelta = (0, _utils.V3)(qqx - ppx, qqy - ppy, qqz - ppz);
+	        rad = velDelta.length;
+	        velDelta.multiplyScalar(environment.gravity * q.m / (p.m * Math.pow(0.01 + rad, 0.5)));
+	        velDelta.multiplyScalar(delta);
+	        vx = ppvx + velDelta.x;
+	        vy = ppvy + velDelta.y;
+	        vz = ppvz + velDelta.z;
+	    }
+
+	    // limiting speed:
+	    var vel = (0, _utils.V3)(vx + environment.heat * (0.5 - Math.random()), vy + environment.heat * (0.5 - Math.random()), vz + environment.heat * (0.5 - Math.random()));
+	    var speed = vel.length();
+	    if (speed > c) {
+	        vel.multiplyScalar(c / (speed + 1));
+	    }
+	    return vel;
+	}
+
 	var Worm = exports.Worm = function () {
 	    function Worm() {
 	        _classCallCheck(this, Worm);
@@ -53464,16 +53591,19 @@
 	        this.lastUpdate = this.time();
 
 	        this.segHeight = 0.5;
-	        this.segLength = 1;
+	        this.segLength = 0.5;
 
 	        this.rings = segments + 1;
 
 	        this.skel = [];
 	        for (var i = 0; i < this.rings; i++) {
 	            this.skel.push({
-	                location: (0, _utils.V3)(0, i * this.segLength, 0),
+	                position: (0, _utils.V3)(0, i * this.segLength, 0),
 	                direction: (0, _utils.V3)(0, 1, 0),
-	                velocity: Math.exp(-i / 4)
+	                velocity: (0, _utils.V3)(0, i === 0 ? -Math.exp(-i / 4) : 0, 0),
+	                m: Math.pow(10, 7),
+	                k: 0.1,
+	                b: 3500
 	            });
 	        }
 
@@ -53503,12 +53633,12 @@
 	                v[i].fromArray(vert.toArray());
 	            };
 
-	            var angle = 0.2;
-
-	            // Head special case:
-	            if (this.skel[0].location.y > -3) {
-	                this.skel[0].location.y -= timeDelta * this.skel[0].velocity;
-	                this.skel[0].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), (0, _utils.rad)(timeDelta * 6));
+	            // Update Head (special case):
+	            if (this.skel[0].position.y > -3) {
+	                // console.log( this.skel[0].velocity.clone().multiplyScalar(timeDelta) );
+	                // debugger
+	                this.skel[0].position.add(this.skel[0].velocity.clone().multiplyScalar(timeDelta));
+	                // this.skel[0].direction.applyAxisAngle(V3(0,0,1), rad(timeDelta * 6));
 	            }
 
 	            // Update rest of skeleton:
@@ -53516,60 +53646,39 @@
 	                var targetIndex = ring - 1;
 	                (0, _utils.assert)(targetIndex >= 0);
 
-	                var target = this.skel[targetIndex].location.clone().add(this.skel[targetIndex].direction.clone().setLength(this.segLength));
+	                var target = this.skel[targetIndex].position.clone().add(this.skel[targetIndex].direction.clone().setLength(this.segLength));
 
-	                var f = function f(t) {
-	                    var alpha = 0.2,
-	                        beta = 2;
-	                    return Math.exp(-alpha * t) * Math.cos(beta * currentTime);
+	                var current = this.skel[ring].position.clone();
+	                var targetVector = target.clone().sub(current);
+
+	                var alice = this.skel[ring];
+	                var bob = {
+	                    position: target,
+	                    velocity: this.skel[targetIndex].velocity.clone(),
+	                    m: Math.pow(10, 7),
+	                    k: 0.1,
+	                    b: 3500
 	                };
 
-	                var current = this.skel[ring].location.clone();
-	                var dir = current.clone().sub(target);
-	                var newLoc = target.clone().add(dir.multiplyScalar(f(timeDelta)));
-
-	                // this.skel[ring].location = newLoc;
-
-	                var targetVector = target.clone().sub(current);
-	                var velocity = this.skel[ring].velocity + 0.5 * this.skel[ring].velocity * Math.abs(Math.cos(this.time()));
-	                if (targetVector.length() > 0.4) {
-	                    velocity = this.skel[targetIndex].velocity;
-	                }
-
-	                var move = Math.min(velocity * timeDelta, targetVector.length());
-
-	                this.skel[ring].location.add(targetVector.setLength(move));
+	                alice.velocity = updateVelocity(alice, bob, timeDelta);
+	                alice.position = updatePosition(alice, bob, timeDelta);
 
 	                var angleDiff = this.skel[ring].direction.angleTo(this.skel[targetIndex].direction);
 
 	                var moveAngle = angleDiff / 2; // Math.pow(angleDiff, 10);
 
-	                this.skel[ring].direction.applyAxisAngle((0, _utils.V3)(0, 0, 1), angleDiff);
+	                // this.skel[ring].direction.applyAxisAngle(V3(0,0,1), angleDiff);
 	            }
 
 	            for (var _ring = 0; _ring < this.rings; _ring++) {
 	                var skel = this.skel[_ring];
 	                var needle = (0, _utils.V3)(0, 0, this.segHeight);
 	                for (var j = 0; j < slices; j++) {
-	                    var vert = needle.clone().add(skel.location);
+	                    var vert = needle.clone().add(skel.position);
 	                    setVertex(_ring * slices + j, vert);
-
 	                    needle.applyAxisAngle(skel.direction, (0, _utils.rad)(360 / slices));
 	                }
 	            }
-
-	            // for (let ring = 0; ring < rings; ring++) {
-	            //     const start = ring * slices;
-	            //     const mid = midPoint(v[start], v[start + slices/2]);
-
-	            //     for (let p = 0; p < slices; p++) {
-	            //         v[start + p].fromArray( rotate(v[start + p], mid, rad(angle)).add(
-	            //             V3(-0.0, 0.0, 0)
-	            //             ).toArray());
-	            //     }
-
-	            //     angle /= 2;
-	            // }
 
 	            this.wormMesh.geometry.computeFaceNormals();
 	            this.wormMesh.geometry.verticesNeedUpdate = true;
