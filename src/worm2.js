@@ -191,7 +191,7 @@ export class Worm {
             });
         }
 
-        this.skel[0].velocity = V3(0, -0.3, 0);
+        this.skel[0].velocity = V3(0.2, -0.3, 0);
 
         this.wormMesh = wormMesh();
         this.clock = new THREE.Clock();
