@@ -19,8 +19,8 @@ function stopOnNaN(value) {
     }
 }
 
-const slices = 8;
-const segments = 3;
+const slices = 12;
+const segments = 4;
 
 export const wormGeom = function() {
     const geom = new THREE.Geometry();

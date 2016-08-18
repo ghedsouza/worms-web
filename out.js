@@ -53397,8 +53397,8 @@
 	    }
 	}
 
-	var slices = 8;
-	var segments = 3;
+	var slices = 12;
+	var segments = 4;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
 	    var geom = new THREE.Geometry();
