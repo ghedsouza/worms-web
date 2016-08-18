@@ -80,7 +80,7 @@ var mInit = 500;
 var kInit = 700;
 var bInit = 15;
 var c = 100;
-var maxDistance = 200;
+var maxDistance = 2;
 var environment = {heat: 2, strongDistance: bobRad*20, gravity: 1000};
 
 // function V3(x,y,z){ return new THREE.Vector3(x,y,z);}
@@ -124,10 +124,12 @@ function updatePosition(p, q, delta){
     var qpos = q.position.clone();
     var disp = V3(0,0,0).subVectors(ppos, qpos);
     var dist = disp.length;
-    if (dist > maxDistance){
-        disp.multiplyScalar(maxDistance/(dist+1));
-        ppos.addVectors(qpos, disp);
-    }
+
+    // if (dist > maxDistance){
+    //     disp.multiplyScalar(maxDistance/(dist+1));
+    //     ppos.addVectors(qpos, disp);
+    // }
+
     return ppos;
 }
 
@@ -162,17 +164,16 @@ function updateVelocity(p, q, delta){
     // limiting speed:
     var vel = V3(vx+environment.heat*(0.5-Math.random()),vy+environment.heat*(0.5-Math.random()),vz+environment.heat*(0.5-Math.random()));
     var speed = vel.length();
-    if (speed > c){
-        vel.multiplyScalar(c/(speed+1));
-    }
+
+    // if (speed > c){
+    //     vel.multiplyScalar(c/(speed+1));
+    // }
+
     return vel;
 }
 
 export class Worm {
     constructor() {
-        this.timeZero = time();
-        this.lastUpdate = this.time();
-
         this.segHeight = 0.5;
         this.segLength = 0.5;
 
@@ -183,23 +184,21 @@ export class Worm {
             this.skel.push({
                 position: V3(0, i * this.segLength, 0),
                 direction: V3(0,1,0),
-                velocity: V3(0, (i === 0? -Math.exp(-i/4) : 0), 0),
-                m: Math.pow(10, 7),
-                k: 0.1,
-                b: 3500,
+                velocity: V3(0, 0, 0),
+                m: 500,
+                k: 700,
+                b: 15,
             });
         }
 
-        this.wormMesh = wormMesh();
-    }
+        this.skel[0].velocity = V3(0, -0.1, 0);
 
-    time() {
-        return (time() - this.timeZero);
+        this.wormMesh = wormMesh();
+        this.clock = new THREE.Clock();
     }
 
     update() {
-        const currentTime = this.time();
-        const timeDelta = this.time() - this.lastUpdate;
+        const timeDelta = this.clock.getDelta();
 
         const rotateXY = function(point, center, angle) {
             return point.clone().add(
@@ -219,45 +218,32 @@ export class Worm {
 
         // Update Head (special case):
         if (this.skel[0].position.y > -3) {
-            // console.log( this.skel[0].velocity.clone().multiplyScalar(timeDelta) );
-            // debugger
             this.skel[0].position.add( this.skel[0].velocity.clone().multiplyScalar(timeDelta) );
-            // this.skel[0].direction.applyAxisAngle(V3(0,0,1), rad(timeDelta * 6));
         }
 
         // Update rest of skeleton:
         for (let ring = 1; ring < this.rings; ring++) {
             const targetIndex = ring - 1;
             assert(targetIndex >= 0);
+            const targetRing = this.skel[targetIndex];
 
-            const target = this.skel[targetIndex].position.clone().add(
-                this.skel[targetIndex].direction.clone().setLength(
+            const targetEndPos = targetRing.position.clone().add(
+                targetRing.direction.clone().setLength(
                     this.segLength
                     )
                 );
 
-            const current = this.skel[ring].position.clone();
-            const targetVector = target.clone().sub(current);
-
             const alice = this.skel[ring];
             const bob = {
-                position: target,
-                velocity: this.skel[targetIndex].velocity.clone(),
-                m: Math.pow(10, 7),
-                k: 0.1,
-                b: 3500,
+                position: targetEndPos,
+                velocity: targetRing.velocity.clone(),
+                m: targetRing.m,
+                k: targetRing.k,
+                b: targetRing.b,
             };
 
             alice.velocity = updateVelocity(alice, bob, timeDelta);
             alice.position = updatePosition(alice, bob, timeDelta);
-
-            const angleDiff = this.skel[ring].direction.angleTo(
-                this.skel[targetIndex].direction
-                );
-
-            const moveAngle = angleDiff/2; // Math.pow(angleDiff, 10);
-
-            // this.skel[ring].direction.applyAxisAngle(V3(0,0,1), angleDiff);
         }
 
         for (let ring=0; ring<this.rings; ring++) {
@@ -272,6 +258,5 @@ export class Worm {
 
         this.wormMesh.geometry.computeFaceNormals();
         this.wormMesh.geometry.verticesNeedUpdate = true;
-        this.lastUpdate = this.time();
     }
 }
