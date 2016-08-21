@@ -1,10 +1,12 @@
 # Worms
 
-## Running the game
-
-Open `worms.html` in your browser.
+## [Play game](http://ghedsouza.github.io/worms-web/worms.html)
 
 ## Development Notes
+
+### Running the game
+
+After building, open `worms.html` in your browser.
 
 ### Requirements:
 
