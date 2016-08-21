@@ -53385,6 +53385,10 @@
 
 	var colors = _interopRequireWildcard(_colors);
 
+	var _spring = __webpack_require__(10);
+
+	var spring = _interopRequireWildcard(_spring);
+
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -53398,7 +53402,7 @@
 	}
 
 	var slices = 12;
-	var segments = 4;
+	var segments = 2;
 
 	var wormGeom = exports.wormGeom = function wormGeom() {
 	    var geom = new THREE.Geometry();
@@ -53418,10 +53422,10 @@
 	        for (var _j = 0; _j < slices; _j++) {
 	            var a = start + _j;
 	            var b = start + (_j + 1) % slices;
-	            var _c = a + slices;
+	            var c = a + slices;
 	            var d = b + slices;
 	            geom.faces.push((0, _utils.F3)(a, b, d));
-	            geom.faces.push((0, _utils.F3)(a, d, _c));
+	            geom.faces.push((0, _utils.F3)(a, d, c));
 	        }
 	    }
 
@@ -53453,143 +53457,17 @@
 	    return mesh;
 	};
 
-	var aliceRad = 9,
-	    bobRad = 10,
-	    carlRad = 9.5,
-	    eveRad = 8.5;
-	var mInit = 500;
-	var kInit = 700;
-	var bInit = 15;
-	var c = 100;
-	var maxDistance = 2;
-	var environment = { heat: 0, strongDistance: bobRad * 20, gravity: 1000 };
-
-	// function V3(x,y,z){ return new THREE.Vector3(x,y,z);}
-	function V4(x, y, z, w) {
-	    return new THREE.Vector4(x, y, z, w);
-	}
-	// function F3(x,y,z){ return new THREE.Face3(x,y,z);}
-
-	function log(check) {
-	    window.console.log(check);
-	}
-	function dist3(x1, y1, z1, x2, y2, z2) {
-	    return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
-	}
-	function distV3(V3a, V3b) {
-	    var vx = V3a.x,
-	        vy = V3a.y,
-	        vz = V3a.z;
-	    var ux = V3b.x,
-	        uy = V3b.y,
-	        uz = V3b.z;
-	    return Math.sqrt((vx - ux) * (vx - ux) + (vy - uy) * (vy - uy) + (vz - uz) * (vz - uz));
-	}
-
-	function getC0(m, k, b, delta) {
-	    return 1 - k * delta * delta / (2 * m);
-	}
-	function getC1(m, k, b, delta) {
-	    return k * delta * delta / (2 * m);
-	}
-	function getC2(m, k, b, delta) {
-	    return delta - b * delta * delta / (2 * m);
-	}
-	function getC3(m, k, b, delta) {
-	    return b * delta * delta / (2 * m);
-	}
-	function getC4(m, k, b, delta) {
-	    return -k * delta / m;
-	}
-	function getC5(m, k, b, delta) {
-	    return k * delta / m;
-	}
-	function getC6(m, k, b, delta) {
-	    return 1 - b * delta / m;
-	}
-	function getC7(m, k, b, delta) {
-	    return b * delta / m;
-	}
-
-	function updatePosition(p, q, delta) {
-	    //var c0, c1, c2, c3;
-	    var c0 = getC0(p.m, p.k, p.b, delta);
-	    var c1 = getC1(p.m, p.k, p.b, delta);
-	    var c2 = getC2(p.m, p.k, p.b, delta);
-	    var c3 = getC3(p.m, p.k, p.b, delta);
-
-	    var ppx = p.position.x,
-	        ppy = p.position.y,
-	        ppz = p.position.z;
-	    var qqx = q.position.x,
-	        qqy = q.position.y,
-	        qqz = q.position.z;
-
-	    var px = c0 * ppx + c1 * qqx + c2 * p.velocity.x + c3 * q.velocity.x;
-	    var py = c0 * ppy + c1 * qqy + c2 * p.velocity.y + c3 * q.velocity.y;
-	    var pz = c0 * ppz + c1 * qqz + c2 * p.velocity.z + c3 * q.velocity.z;
-
-	    var ppos = (0, _utils.V3)(px, py, pz);
-	    var qpos = q.position.clone();
-	    var disp = (0, _utils.V3)(0, 0, 0).subVectors(ppos, qpos);
-	    var dist = disp.length;
-
-	    if (dist > maxDistance) {
-	        disp.multiplyScalar(maxDistance / (dist + 1));
-	        ppos.addVectors(qpos, disp);
-	    }
-
-	    return ppos;
-	}
-
-	function updateVelocity(p, q, delta) {
-	    var c4, c5, c6, c7;
-
-	    var ppx = p.position.x,
-	        ppy = p.position.y,
-	        ppz = p.position.z;
-	    var ppvx = p.velocity.x,
-	        ppvy = p.velocity.y,
-	        ppvz = p.velocity.z;
-	    var qqx = q.position.x,
-	        qqy = q.position.y,
-	        qqz = q.position.z;
-	    var vx, vy, vz, velDelta, rad;
-	    var distance = dist3(ppx, ppy, ppz, qqx, qqy, qqz);
-
-	    if (true) {
-	        c4 = getC4(p.m, p.k, p.b, delta);
-	        c5 = getC5(p.m, p.k, p.b, delta);
-	        c6 = getC6(p.m, p.k, p.b, delta);
-	        c7 = getC7(p.m, p.k, p.b, delta);
-
-	        vx = c4 * ppx + c5 * qqx + c6 * ppvx + c7 * q.velocity.x;
-	        vy = c4 * ppy + c5 * qqy + c6 * ppvy + c7 * q.velocity.y;
-	        vz = c4 * ppz + c5 * qqz + c6 * ppvz + c7 * q.velocity.z;
-	    } else {
-	        velDelta = (0, _utils.V3)(qqx - ppx, qqy - ppy, qqz - ppz);
-	        rad = velDelta.length;
-	        velDelta.multiplyScalar(environment.gravity * q.m / (p.m * Math.pow(0.01 + rad, 0.5)));
-	        velDelta.multiplyScalar(delta);
-	        vx = ppvx + velDelta.x;
-	        vy = ppvy + velDelta.y;
-	        vz = ppvz + velDelta.z;
-	    }
-
-	    // limiting speed:
-	    var vel = (0, _utils.V3)(vx + environment.heat * (0.5 - Math.random()), vy + environment.heat * (0.5 - Math.random()), vz + environment.heat * (0.5 - Math.random()));
-	    var speed = vel.length();
-
-	    if (speed > c) {
-	        vel.multiplyScalar(c / (speed + 1));
-	    }
-
-	    return vel;
-	}
-
 	var Worm = exports.Worm = function () {
 	    function Worm() {
 	        _classCallCheck(this, Worm);
+
+	        this.springModel = new spring.SpringModel({
+	            c: 100,
+	            maxDistance: 2,
+	            environment: {
+	                heat: 0.05
+	            }
+	        });
 
 	        this.segHeight = 0.5;
 	        this.segLength = 0.5;
@@ -53599,7 +53477,7 @@
 	        this.skel = [];
 	        for (var i = 0; i < this.rings; i++) {
 	            this.skel.push({
-	                position: (0, _utils.V3)(0, i * this.segLength, 0),
+	                position: (0, _utils.V3)(0, i * this.segLength, 2),
 	                direction: (0, _utils.V3)(0, 1, 0),
 	                velocity: (0, _utils.V3)(0, 0, 0),
 	                m: 45,
@@ -53656,8 +53534,8 @@
 	                    b: targetRing.b
 	                };
 
-	                alice.velocity = updateVelocity(alice, bob, timeDelta);
-	                alice.position = updatePosition(alice, bob, timeDelta);
+	                alice.velocity = this.springModel.updateVelocity(alice, bob, timeDelta);
+	                alice.position = this.springModel.updatePosition(alice, bob, timeDelta);
 
 	                var angleDiff = this.skel[ring].direction.angleTo(this.skel[targetIndex].direction);
 
@@ -53668,11 +53546,18 @@
 
 	            for (var _ring = 0; _ring < this.rings; _ring++) {
 	                var skel = this.skel[_ring];
-	                var needle = (0, _utils.V3)(0, 0, this.segHeight);
+
+	                var needle = skel.position.clone().add((0, _utils.V3)(0, 0, this.segHeight));
+	                // debugger
+
 	                for (var j = 0; j < slices; j++) {
-	                    var vert = needle.clone().add(skel.position);
+	                    var vert = needle.clone(); // .add( skel.position );
+
 	                    setVertex(_ring * slices + j, vert);
-	                    needle.applyAxisAngle(skel.direction, (0, _utils.rad)(360 / slices));
+
+	                    var temp = needle.clone().sub(skel.position).applyAxisAngle(skel.direction, (0, _utils.rad)(360 / slices)).add(skel.position);
+	                    // needle.applyAxisAngle(skel.direction, rad(360/slices));
+	                    needle = temp;
 	                }
 	            }
 
@@ -53682,6 +53567,168 @@
 	    }]);
 
 	    return Worm;
+	}();
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.SpringModel = exports.updateVelocity = exports.updatePosition = undefined;
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); // Damped Spring Model
+	//
+	// Based on code from Ruben:
+	// https://github.com/romxz/romxz.github.io/blob/master/three/test_09/src/physics_test2.js
+	// Also see notes in ./damped_spring_model_notes.pdf
+	//
+
+	var _three = __webpack_require__(2);
+
+	var THREE = _interopRequireWildcard(_three);
+
+	var _utils = __webpack_require__(4);
+
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	// Reference numbers:
+	// var mInit = 500;
+	// var kInit = 700;
+	// var bInit = 15;
+
+	// Spring equation constants:
+
+	function getC0(m, k, b, delta) {
+	    return 1 - k * delta * delta / (2 * m);
+	}
+	function getC1(m, k, b, delta) {
+	    return k * delta * delta / (2 * m);
+	}
+	function getC2(m, k, b, delta) {
+	    return delta - b * delta * delta / (2 * m);
+	}
+	function getC3(m, k, b, delta) {
+	    return b * delta * delta / (2 * m);
+	}
+
+	function getC4(m, k, b, delta) {
+	    return -k * delta / m;
+	}
+	function getC5(m, k, b, delta) {
+	    return k * delta / m;
+	}
+	function getC6(m, k, b, delta) {
+	    return 1 - b * delta / m;
+	}
+	function getC7(m, k, b, delta) {
+	    return b * delta / m;
+	}
+
+	function _updatePosition(p, q, delta, maxDistance) {
+	    var c0 = getC0(p.m, p.k, p.b, delta);
+	    var c1 = getC1(p.m, p.k, p.b, delta);
+	    var c2 = getC2(p.m, p.k, p.b, delta);
+	    var c3 = getC3(p.m, p.k, p.b, delta);
+
+	    var ppx = p.position.x,
+	        ppy = p.position.y,
+	        ppz = p.position.z;
+	    var qqx = q.position.x,
+	        qqy = q.position.y,
+	        qqz = q.position.z;
+
+	    var px = c0 * ppx + c1 * qqx + c2 * p.velocity.x + c3 * q.velocity.x;
+	    var py = c0 * ppy + c1 * qqy + c2 * p.velocity.y + c3 * q.velocity.y;
+	    var pz = c0 * ppz + c1 * qqz + c2 * p.velocity.z + c3 * q.velocity.z;
+
+	    var ppos = (0, _utils.V3)(px, py, pz);
+	    var qpos = q.position.clone();
+	    var disp = (0, _utils.V3)(0, 0, 0).subVectors(ppos, qpos);
+	    var dist = disp.length;
+
+	    if (dist > maxDistance) {
+	        disp.multiplyScalar(maxDistance / (dist + 1));
+	        ppos.addVectors(qpos, disp);
+	    }
+
+	    return ppos;
+	}
+
+	exports.updatePosition = _updatePosition;
+	function _updateVelocity(p, q, delta, environment, c) {
+	    var c4, c5, c6, c7;
+
+	    var ppx = p.position.x,
+	        ppy = p.position.y,
+	        ppz = p.position.z;
+	    var ppvx = p.velocity.x,
+	        ppvy = p.velocity.y,
+	        ppvz = p.velocity.z;
+	    var qqx = q.position.x,
+	        qqy = q.position.y,
+	        qqz = q.position.z;
+	    var vx, vy, vz;
+
+	    c4 = getC4(p.m, p.k, p.b, delta);
+	    c5 = getC5(p.m, p.k, p.b, delta);
+	    c6 = getC6(p.m, p.k, p.b, delta);
+	    c7 = getC7(p.m, p.k, p.b, delta);
+
+	    vx = c4 * ppx + c5 * qqx + c6 * ppvx + c7 * q.velocity.x;
+	    vy = c4 * ppy + c5 * qqy + c6 * ppvy + c7 * q.velocity.y;
+	    vz = c4 * ppz + c5 * qqz + c6 * ppvz + c7 * q.velocity.z;
+
+	    var vel = (0, _utils.V3)(vx + environment.heat * (0.5 - Math.random()), vy + environment.heat * (0.5 - Math.random()), 0 // vz+environment.heat*(0.5-Math.random())
+	    );
+
+	    // limiting speed:
+	    var speed = vel.length();
+	    if (speed > c) {
+	        vel.multiplyScalar(c / (speed + 1));
+	    }
+
+	    return vel;
+	}
+
+	exports.updateVelocity = _updateVelocity;
+
+	var SpringModel = exports.SpringModel = function () {
+	    function SpringModel() {
+	        var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+	        var _ref$c = _ref.c;
+	        var c = _ref$c === undefined ? 100 : _ref$c;
+	        var _ref$maxDistance = _ref.maxDistance;
+	        var maxDistance = _ref$maxDistance === undefined ? 2 : _ref$maxDistance;
+	        var _ref$heat = _ref.heat;
+	        var heat = _ref$heat === undefined ? 0.0 : _ref$heat;
+
+	        _classCallCheck(this, SpringModel);
+
+	        this.c = c;
+	        this.maxDistance = maxDistance;
+	        this.environment = { heat: heat };
+	    }
+
+	    _createClass(SpringModel, [{
+	        key: 'updateVelocity',
+	        value: function updateVelocity(p, q, delta) {
+	            return _updateVelocity(p, q, delta, this.environment, this.c);
+	        }
+	    }, {
+	        key: 'updatePosition',
+	        value: function updatePosition(p, q, delta) {
+	            return _updatePosition(p, q, delta, this.maxDistance);
+	        }
+	    }]);
+
+	    return SpringModel;
 	}();
 
 /***/ }
