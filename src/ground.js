@@ -6,6 +6,6 @@ export const surface = function() {
 	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
 	floorTexture.repeat.set(100, 100);
 	const basicMaterial = new THREE.MeshBasicMaterial({ map: floorTexture, side: THREE.FrontSide });
-	const floorGeometry = new THREE.PlaneGeometry(1000, 1000);
+	const floorGeometry = new THREE.PlaneGeometry(800, 600);
     return new THREE.Mesh(floorGeometry, basicMaterial);
 };

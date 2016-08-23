@@ -41,8 +41,8 @@ function run() {
     const $debug = $('#debug');
 
     // set the scene size
-    var WIDTH = 500,
-        HEIGHT = 500;
+    var WIDTH = 800,
+        HEIGHT = 600;
 
     // set some camera attributes
     var VIEW_ANGLE = 45,
