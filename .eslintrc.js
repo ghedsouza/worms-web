@@ -8,9 +8,20 @@ module.exports = {
         "sourceType": "module"
     },
     "rules": {
+        "no-var": [
+            "error",
+        ],
         "indent": [
             "error",
             4
+        ],
+        "max-len": [
+            "error",
+            {
+                "ignoreComments": true,
+                "ignoreUrls": true,
+                "ignoreTrailingComments": true,
+            },
         ],
         "linebreak-style": [
             "error",
