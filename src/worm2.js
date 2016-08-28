@@ -90,9 +90,9 @@ export class Worm {
         this.target = V3(1, -1, 0);
 
         this.segHeight = 0.4;
-        this.segLength = 0.25;
+        this.segLength = 0.5;
 
-        this.segments = 8;
+        this.segments = 3;
         this.rings = this.segments + 1;
         this.slices = 12;
 
@@ -106,7 +106,7 @@ export class Worm {
                 velocity: V3(0, 0, 0),
                 speed: 0.3,
                 turnSpeed: 0.005,
-                m: 25,
+                m: 25*(i+1),
                 k: 20,
                 b: 30,
             });
@@ -144,7 +144,17 @@ export class Worm {
 
         if (angleBetween > 0) {
             const cross = facing.clone().cross(idealDirection);
-            const toTurn = Math.min(angleBetween, head.turnSpeed);
+            let toTurn = Math.min(angleBetween, head.turnSpeed);
+
+            if (this.rings > 1) {
+                const nextDirection = this.skel[1].direction;
+                const nextDirectionCross = nextDirection.clone().cross(head.direction);
+                console.log("angleTo: ", nextDirection.angleTo(head.direction));
+                if (nextDirection.angleTo(head.direction) > rad(10)) {
+                    toTurn = 0;
+                }
+            }
+
             const newFacing = facing.clone().applyAxisAngle(
                 cross,
                 slow * toTurn * (0.5 * (1 + Math.cos(timeDelta/2)))
@@ -196,7 +206,7 @@ export class Worm {
 
             const directionRay = new THREE.Ray(targetRing.position, targetRing.direction);
             const rayTarget = directionRay.closestPointToPoint(alice.position);
-            const maxRayDist = 0.1;
+            const maxRayDist = 0.2;
             if (alice.position.distanceTo(rayTarget) > maxRayDist) {
                 const newPos = alice.position.clone().lerp(
                     rayTarget,

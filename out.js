@@ -53185,45 +53185,20 @@
 
 	var THREE = _interopRequireWildcard(_three);
 
-	var _utils = __webpack_require__(4);
-
-	var _colors = __webpack_require__(6);
-
-	var colors = _interopRequireWildcard(_colors);
-
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	var get_surface_geom = function get_surface_geom() {
-	    var length = 8;
-	    var surface_geom = new THREE.Geometry();
-	    surface_geom.vertices.push((0, _utils.V3)(-(length / 2), -(length / 2), 0));
-	    surface_geom.vertices.push((0, _utils.V3)(-(length / 2), length / 2, 0));
-	    surface_geom.vertices.push((0, _utils.V3)(length / 2, -(length / 2), 0));
-	    surface_geom.vertices.push((0, _utils.V3)(length / 2, length / 2, 0));
-
-	    function wrap(index) {
-	        return index % 4;
-	    }
-	    function face(a, b, c) {
-	        return new THREE.Face3(wrap(a), wrap(b), wrap(c), null, null);
-	    }
-
-	    surface_geom.faces.push(face(0, 2, 3));
-	    surface_geom.faces.push(face(0, 3, 1));
-	    return surface_geom;
-	};
-
 	var surface = exports.surface = function surface() {
-	    var surfaceMaterial = new THREE.MeshPhongMaterial({ color: colors.red });
-	    var meshFaceMaterial = new THREE.MeshFaceMaterial([surfaceMaterial]);
+	    var floorTexture = new THREE.ImageUtils.loadTexture('images/dirt-seamless.jpg');
+	    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+	    floorTexture.repeat.set(100, 100);
 
-	    var surface_geom = get_surface_geom();
-	    surface_geom.computeFaceNormals();
-	    for (var face in surface_geom.faces) {
-	        surface_geom.faces[face].materialIndex = 0;
-	    }
+	    var basicMaterial = new THREE.MeshBasicMaterial({
+	        map: floorTexture,
+	        side: THREE.FrontSide
+	    });
+	    var floorGeometry = new THREE.PlaneGeometry(500, 500);
 
-	    return new THREE.Mesh(surface_geom, meshFaceMaterial);
+	    return new THREE.Mesh(floorGeometry, basicMaterial);
 	};
 
 /***/ },
@@ -53472,9 +53447,9 @@
 	        this.target = (0, _utils.V3)(1, -1, 0);
 
 	        this.segHeight = 0.4;
-	        this.segLength = 0.25;
+	        this.segLength = 0.5;
 
-	        this.segments = 8;
+	        this.segments = 3;
 	        this.rings = this.segments + 1;
 	        this.slices = 12;
 
@@ -53488,7 +53463,7 @@
 	                velocity: (0, _utils.V3)(0, 0, 0),
 	                speed: 0.3,
 	                turnSpeed: 0.005,
-	                m: 25,
+	                m: 25 * (i + 1),
 	                k: 20,
 	                b: 30
 	            });
@@ -53525,6 +53500,16 @@
 	            if (angleBetween > 0) {
 	                var cross = facing.clone().cross(idealDirection);
 	                var toTurn = Math.min(angleBetween, head.turnSpeed);
+
+	                if (this.rings > 1) {
+	                    var nextDirection = this.skel[1].direction;
+	                    var nextDirectionCross = nextDirection.clone().cross(head.direction);
+	                    console.log("angleTo: ", nextDirection.angleTo(head.direction));
+	                    if (nextDirection.angleTo(head.direction) > (0, _utils.rad)(10)) {
+	                        toTurn = 0;
+	                    }
+	                }
+
 	                var newFacing = facing.clone().applyAxisAngle(cross, slow * toTurn * (0.5 * (1 + Math.cos(timeDelta / 2))));
 	                head.direction = newFacing.clone().negate();
 	            }
@@ -53563,7 +53548,7 @@
 
 	                var directionRay = new THREE.Ray(targetRing.position, targetRing.direction);
 	                var rayTarget = directionRay.closestPointToPoint(alice.position);
-	                var maxRayDist = 0.1;
+	                var maxRayDist = 0.2;
 	                if (alice.position.distanceTo(rayTarget) > maxRayDist) {
 	                    var newPos = alice.position.clone().lerp(rayTarget, (alice.position.distanceTo(rayTarget) - maxRayDist) / alice.position.distanceTo(rayTarget));
 	                    alice.position = newPos;
