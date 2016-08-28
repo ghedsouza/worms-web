@@ -10,6 +10,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "./node_modules/.bin/eslint src",
+    "serve": "./node_modules/.bin/http-server -a localhost",
     "compile": "npm run babel && npm run webpack",
     "babel": "./node_modules/.bin/babel src -d lib",
     "webpack": "./node_modules/.bin/webpack lib/main.js out.js"
@@ -32,6 +33,7 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-register": "6.9.0",
     "babel-runtime": "6.5.0",
+    "http-server": "^0.9.0",
     "jquery": "^1.7.4",
     "stats.js": "git+https://github.com/mrdoob/stats.js.git",
     "three": "^0.77.1",

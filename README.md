@@ -4,21 +4,25 @@
 
 ## Development Notes
 
-### Running the game
-
-After building, open `worms.html` in your browser.
-
 ### Requirements:
 
-You need a recent version of node/npm installed.
-Install the latest node from https://nodejs.org/en/ to get both.
+You need a recent version of node and npm installed.
+You can get both by installing the latest node from https://nodejs.org/en/.
 
 ### Build steps:
 
-After cloning project, run
+- Run `npm install` to install dependencies.
+- Run `npm run compile` to build `out.js` from the current `src`
+  (or, if you have bash, `./compile` is a bit faster).
 
-1. `npm install`
-1. `npm run compile`
+### Running the game
+
+Run `npm serve` and then open `localhost:8080` in your browser.
+
+*Note*: Running a web server for the game instead of just opening `worms.html`
+directly is necessary because of cross-origin security restrictions that prevent
+textures from loading in the context of a local file.
+
 
 ### Project structure
 

@@ -53177,7 +53177,7 @@
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-		value: true
+	    value: true
 	});
 	exports.surface = undefined;
 
@@ -53188,13 +53188,17 @@
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 	var surface = exports.surface = function surface() {
+	    var floorTexture = new THREE.ImageUtils.loadTexture('images/dirt-seamless.jpg');
+	    floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+	    floorTexture.repeat.set(100, 100);
 
-		var floorTexture = new THREE.ImageUtils.loadTexture('images/dirt-seamless.jpg');
-		floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
-		floorTexture.repeat.set(100, 100);
-		var basicMaterial = new THREE.MeshBasicMaterial({ map: floorTexture, side: THREE.FrontSide });
-		var floorGeometry = new THREE.PlaneGeometry(500, 500);
-		return new THREE.Mesh(floorGeometry, basicMaterial);
+	    var basicMaterial = new THREE.MeshBasicMaterial({
+	        map: floorTexture,
+	        side: THREE.FrontSide
+	    });
+	    var floorGeometry = new THREE.PlaneGeometry(500, 500);
+
+	    return new THREE.Mesh(floorGeometry, basicMaterial);
 	};
 
 /***/ },
