@@ -17,7 +17,7 @@ You can get both by installing the latest node from https://nodejs.org/en/.
 
 ### Running the game
 
-Run `npm serve` and then open `localhost:8080` in your browser.
+Run `npm run serve` and then open `localhost:8080` in your browser.
 
 *Note*: Running a web server for the game instead of just opening `worms.html`
 directly is necessary because of cross-origin security restrictions that prevent
