@@ -8,6 +8,9 @@ module.exports = {
         "sourceType": "module"
     },
     "rules": {
+        "no-debugger": [
+            "off",
+        ],
         "no-var": [
             "error",
         ],
@@ -16,7 +19,7 @@ module.exports = {
             4
         ],
         "max-len": [
-            "error",
+            "warn",
             {
                 "ignoreComments": true,
                 "ignoreUrls": true,
