@@ -17,7 +17,7 @@ You can get both by installing the latest node from https://nodejs.org/en/.
 
 ### Running the game
 
-Run `npm serve` and then open `localhost:8080` in your browser.
+Run `npm run serve` and then open `localhost:8080` in your browser.
 
 *Note*: Running a web server for the game instead of just opening `worms.html`
 directly is necessary because of cross-origin security restrictions that prevent
@@ -40,5 +40,5 @@ The game code is all in `src` and written in [ES6](http://www.ecma-international
 Use THREE.js on http://threejs.org/examples/#canvas_lines.
 
 ```
-function (a,b,c){ return new THREE.Vector3(a,b,c) }
+function v3(a,b,c){ return new THREE.Vector3(a,b,c) }
 ```

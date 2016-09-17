@@ -52968,6 +52968,7 @@
 	exports.assert = assert;
 	exports.time = time;
 	exports.rad = rad;
+	exports.deg = deg;
 	exports.F3 = F3;
 	exports.V3 = V3;
 	exports.V2 = V2;
@@ -52998,6 +52999,10 @@
 
 	function rad(deg) {
 	    return deg * Math.PI / 180;
+	}
+
+	function deg(rad) {
+	    return rad * 180 / Math.PI;
 	}
 
 	// Three.js helpers
@@ -53467,12 +53472,12 @@
 
 	        this.target = (0, _utils.V3)(1, -1, 0);
 
-	        this.segHeight = 0.4;
-	        this.segLength = 0.5;
-
-	        this.segments = 2;
+	        this.segments = 4;
 	        this.rings = this.segments + 1;
 	        this.slices = 12;
+
+	        this.segHeight = 0.4;
+	        this.segLength = 1 / this.segments;
 
 	        this.wormMesh = wormMesh(this.segments, this.slices);
 
@@ -53487,7 +53492,7 @@
 
 	                // Fixed settings:
 	                speed: 0.3,
-	                turnSpeed: 0.05,
+	                turnSpeed: 0.5,
 	                m: 25 * (i + 1),
 	                k: 20,
 	                b: 30
@@ -53519,6 +53524,12 @@
 	            var idealPosition = prevRing.position.clone().add(idealDirection);
 
 	            var angle = axisAngle(direction, idealDirection, Z);
+
+	            var bend = (0, _utils.deg)(direction.angleTo(prevRing.backDirection));
+	            if (bend < 145) {
+	                angle = 0;
+	            }
+
 	            var newDirection = direction.clone().applyAxisAngle(Z, angle * head.turnSpeed * timeDelta);
 
 	            head.position = prevRing.position.clone().add(newDirection);
@@ -53563,7 +53574,7 @@
 
 	                var moveAngle = angleDiff * 0.75; // Math.pow(angleDiff, 10);
 
-	                // this.skel[ring].backDirection.applyAxisAngle(V3(0,0,1), angleDiff);
+	                this.skel[ring].backDirection.applyAxisAngle((0, _utils.V3)(0, 0, 1), angleDiff);
 	            }
 
 	            for (var _ring = 0; _ring < this.rings; _ring++) {

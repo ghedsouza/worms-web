@@ -21,6 +21,10 @@ export function rad(deg) {
     return deg * Math.PI / 180;
 }
 
+export function deg(rad) {
+    return rad * 180 / Math.PI;
+}
+
 // Three.js helpers
 
 export function F3(i, j, k) {

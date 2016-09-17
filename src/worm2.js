@@ -3,6 +3,7 @@ import * as THREE from '../node_modules/three/build/three.js';
 
 import {
     rad,
+    deg,
     assert,
     letter_index,
     F3,
@@ -14,12 +15,22 @@ import * as colors from './colors';
 import * as spring from './physics/spring';
 
 
+//******************************
+// Helper functions
+//******************************
+
+
 function stopOnNaN(value) {
     if (isNaN(value)) {
         debugger;
     }
 }
 
+// Calculate how many radians `v` would have to rotate towards `target` along
+// `axis` so that it would be coincident with `target`.
+//
+// Given Vector3 a, b, z, and angle = axisAngle(a, b, z),
+// a.applyAxisAngle(z, angle).normalize() == b.normalize()
 const axisAngle = function(v, target, axis) {
     const angle = v.angleTo(target);
     const positive = v.clone().applyAxisAngle(axis, angle);
@@ -46,18 +57,23 @@ const midPoint = function(p1, p2) {
 };
 
 
+//******************************
+// Worm model
+//******************************
+
+
 export const wormGeom = function(segments, slices) {
     const geom = new THREE.Geometry();
 
     // Vertex locations (dynamic)
-    // These will get updated later.
+    // These will get updated as the worm moves.
     for (let i = 0; i < (segments+1); i++) {
         for (let j = 0; j < slices; j++) {
             geom.vertices.push(V3());
         }
     }
 
-    // Face definitions: (static)
+    // Face definitions (fixed)
     for (let i = 0; i < segments; i++) {
         const start = i * slices;
 
@@ -115,12 +131,12 @@ export class Worm {
 
         this.target = V3(1, -1, 0);
 
-        this.segHeight = 0.4;
-        this.segLength = 0.5;
-
-        this.segments = 2;
+        this.segments = 4;
         this.rings = this.segments + 1;
         this.slices = 12;
+
+        this.segHeight = 0.4;
+        this.segLength = 1/this.segments;
 
         this.wormMesh = wormMesh(this.segments, this.slices);
 
@@ -135,7 +151,7 @@ export class Worm {
 
                 // Fixed settings:
                 speed: 0.3,
-                turnSpeed: 0.05,
+                turnSpeed: 0.5,
                 m: 25*(i+1),
                 k: 20,
                 b: 30,
@@ -157,6 +173,7 @@ export class Worm {
         //
         // Update Head (special case):
         //
+        let maxed = false;
         const head = this.skel[0];
         const prevRing = this.skel[1];
 
@@ -166,7 +183,14 @@ export class Worm {
             ;
         const idealPosition = prevRing.position.clone().add(idealDirection);
 
-        const angle = axisAngle(direction, idealDirection, Z);
+        let angle = axisAngle(direction, idealDirection, Z);
+
+        const bend = deg(direction.angleTo(prevRing.backDirection));
+        if (bend < 145) {
+            angle = 0;
+            maxed = true;
+        }
+
         const newDirection = direction.clone().applyAxisAngle(
             Z,
             angle * head.turnSpeed * timeDelta
@@ -174,7 +198,6 @@ export class Worm {
 
         head.position = prevRing.position.clone().add(newDirection);
         head.backDirection = newDirection.clone().negate();
-
 
         const facing = head.backDirection.clone().negate();
 
@@ -184,9 +207,40 @@ export class Worm {
         head.position.add(head.velocity);
 
         //
-        // Update rest of skeleton:
+        // Rotate other rings:
         //
-        for (let ring = 1; ring < this.rings; ring++) {
+        for (let ring = 1; ring < (this.rings-1); ring++) {
+            const currRing = this.skel[ring];
+            const prevRing = this.skel[ring+1];
+
+            if (maxed) {
+                // Try to rotate towards wormTarget:
+                const direction = currRing.backDirection.clone().negate();
+                const idealDirection = wormTarget.clone().sub(prevRing)
+                    .setLength(this.segLength)
+                    ;
+                const idealPosition = prevRing.position.clone().add(idealDirection);
+
+                let angle = axisAngle(direction, idealDirection, Z);
+
+                const bend = deg(direction.angleTo(prevRing.backDirection));
+                if (bend < 145) {
+                    angle = 0;
+                    maxed = true;
+                } else {
+                    maxed = false;
+                    const rotate = angle * currRing.turnSpeed * timeDelta;
+
+                }
+
+            }
+
+            // Move forward:
+
+
+            const direction = currRing.backDirection.clone().negate();
+            currRing.position.add(direction
+
             const targetIndex = ring - 1;
             assert(targetIndex >= 0);
             const targetRing = this.skel[targetIndex];
@@ -231,9 +285,12 @@ export class Worm {
 
             const moveAngle = angleDiff * 0.75; // Math.pow(angleDiff, 10);
 
-            // this.skel[ring].backDirection.applyAxisAngle(V3(0,0,1), angleDiff);
+            this.skel[ring].backDirection.applyAxisAngle(V3(0,0,1), angleDiff);
         }
 
+        //
+        // Update vertices based on calculated positions:
+        //
         for (let ring=0; ring<this.rings; ring++) {
             const skel = this.skel[ring];
 
