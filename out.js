@@ -53487,7 +53487,7 @@
 	            }
 	        });
 
-	        this.target = (0, _utils.V3)(1, -1, 0);
+	        this.target = (0, _utils.V3)(3, 3, 0);
 
 	        this.segments = 3;
 	        this.rings = this.segments + 1;
@@ -53507,12 +53507,13 @@
 	                this.worm = worm;
 	                this.index = index;
 	                this.position = position;
+	                this.velocity = (0, _utils.V3)(0, 0, 0);
 
 	                // speed settings:
 	                this.speed = 0.3;
 	                this.turnSpeed = 0.5;
 	                // spring constant settings:
-	                this.m = 25 * (this.index + 1);
+	                this.m = 5;
 	                this.k = 20;
 	                this.b = 30;
 	            }
@@ -53539,7 +53540,6 @@
 
 	                    var angle = axisAngle(direction, idealDirection, Zaxis);
 	                    var newPosition = rotateXY(ring.position, prevRing.position, angle * ring.turnSpeed * timeDelta);
-
 	                    ring.position = newPosition;
 	                }
 	            }, {
@@ -53600,14 +53600,69 @@
 
 	            var wormTarget = this.target;
 
-	            // Rotate joints
+	            // Rotate segments towards target
 	            var didBend = false;
+
 	            for (var ringIndex = 0; ringIndex < this.skeleton.length - 2; ringIndex++) {
 	                var ring = this.skeleton[ringIndex];
-	                if (!didBend && (0, _utils.deg)(ring.currentBend()) > 170) {
+	                if (!didBend && (0, _utils.deg)(ring.currentBend()) > 160) {
 	                    ring.rotateTowards(wormTarget, timeDelta);
 	                    didBend = true;
 	                }
+	            }
+	            if (!didBend) {
+	                var straightened = false;
+	                for (var _ringIndex = this.skeleton.length - 1; _ringIndex > 2; _ringIndex--) {
+	                    var _ring = this.skeleton[_ringIndex];
+	                    var nextRing = this.skeleton[_ringIndex - 1];
+	                    var nextNextRing = this.skeleton[_ringIndex - 2];
+
+	                    var _direction = nextRing.backDirection();
+	                    var idealDirection = nextNextRing.backDirection();
+
+	                    var angle = axisAngle(_direction, idealDirection, Zaxis);
+	                    var newPosition = rotateXY(_ring.position, nextRing.position, angle * _ring.turnSpeed * 2 * timeDelta);
+	                    var check = true;
+	                    if (_ringIndex < this.skeleton.length - 1) {
+	                        if ((0, _utils.deg)(nextRing.currentBend()) < 150) {
+	                            check = false;
+	                        }
+	                    }
+	                    if (check && !straightened && angle > 0) {
+	                        straightened = true;
+	                        _ring.position = newPosition;
+	                    }
+	                }
+	            }
+
+	            // Move head forward
+	            var head = this.skeleton[0];
+	            var direction = head.backDirection().negate();
+
+	            head.velocity = direction.setLength(head.speed * timeDelta);
+
+	            var newHeadPosition = head.position.clone().add(head.velocity);
+	            if (newHeadPosition.distanceTo(wormTarget) < head.position.distanceTo(wormTarget)) {
+	                head.position = newHeadPosition;
+	            }
+
+	            // Correct positions of other rings
+	            for (var _ringIndex2 = 1; _ringIndex2 < this.skeleton.length; _ringIndex2++) {
+	                var _ring2 = this.skeleton[_ringIndex2];
+	                var _nextRing = this.skeleton[_ringIndex2 - 1];
+
+	                var idealPositionVector = _nextRing.backDirection().setLength(this.segLength);
+	                var idealPosition = _nextRing.position.clone().add(idealPositionVector);
+
+	                var bob = {
+	                    position: idealPosition,
+	                    velocity: _nextRing.velocity.clone(),
+	                    m: _nextRing.m,
+	                    k: _nextRing.k,
+	                    b: _nextRing.b
+	                };
+	                _ring2.velocity = this.springModel.updateVelocity(_ring2, bob, timeDelta);
+	                _ring2.position = this.springModel.updatePosition(_ring2, bob, timeDelta);
 	            }
 
 	            this.updateVertices();
