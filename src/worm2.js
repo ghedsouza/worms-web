@@ -3,6 +3,7 @@ import * as THREE from '../node_modules/three/build/three.js';
 
 import {
     rad,
+    deg,
     assert,
     letter_index,
     F3,
@@ -14,25 +15,65 @@ import * as colors from './colors';
 import * as spring from './physics/spring';
 
 
+//******************************
+// Helper functions
+//******************************
+
 function stopOnNaN(value) {
     if (isNaN(value)) {
         debugger;
     }
 }
 
+const Zaxis = V3(0,0,1);
+
+// Calculate how many radians `v` would have to rotate towards `target` along
+// `axis` so that it would be coincident with `target`.
+//
+// Given Vector3 a, b, z, and angle = axisAngle(a, b, z),
+// a.applyAxisAngle(z, angle).normalize() == b.normalize()
+const axisAngle = function(v, target, axis) {
+    const angle = v.angleTo(target);
+    const positive = v.clone().applyAxisAngle(axis, angle);
+    const negative = v.clone().applyAxisAngle(axis, -angle);
+    if (positive.distanceTo(target) < negative.distanceTo(target)) {
+        return angle;
+    } else {
+        return -angle;
+    }
+}
+
+// Assume point and center are on the XY plane
+// Rotate point around center on the XY plane
+const rotateXY = function(point, center, angle) {
+    return point.clone().add(
+        center.clone().negate()
+        ).applyAxisAngle(V3(0,0,1), angle).add(
+            center
+            );
+}
+
+const midPoint = function(p1, p2) {
+    return p1.clone().lerp(p2, 0.5);
+};
+
+
+//******************************
+// Worm model
+//******************************
 
 export const wormGeom = function(segments, slices) {
     const geom = new THREE.Geometry();
 
     // Vertex locations (dynamic)
-    // These will get updated later.
+    // These will get updated as the worm moves.
     for (let i = 0; i < (segments+1); i++) {
         for (let j = 0; j < slices; j++) {
             geom.vertices.push(V3());
         }
     }
 
-    // Face definitions: (static)
+    // Face definitions (fixed)
     for (let i = 0; i < segments; i++) {
         const start = i * slices;
 
@@ -75,6 +116,7 @@ export const wormMesh = function(segments, slices) {
     return mesh;
 }
 
+
 export class Worm {
     constructor() {
         this.clock = new THREE.Clock();
@@ -87,165 +129,200 @@ export class Worm {
             },
         });
 
-        this.target = V3(1, -1, 0);
-
-        this.segHeight = 0.4;
-        this.segLength = 0.5;
+        this.target = V3(3, 3, 0);
 
         this.segments = 3;
         this.rings = this.segments + 1;
         this.slices = 12;
 
+        this.segHeight = 0.4;
+        this.segLength = 2/this.segments;
+
         this.wormMesh = wormMesh(this.segments, this.slices);
 
-        this.skel = [];
-        for (let i=0; i<this.rings; i++) {
-            this.skel.push({
-                position: V3(0, i * this.segLength, 0),
-                direction: V3(0,1,0),
-                velocity: V3(0, 0, 0),
-                speed: 0.3,
-                turnSpeed: 0.005,
-                m: 25*(i+1),
-                k: 20,
-                b: 30,
-            });
+        this.skeleton = [];
+
+        class Ring {
+            constructor(worm, index, position) {
+                this.worm = worm;
+                this.index = index;
+                this.position = position;
+                this.velocity = V3(0,0,0);
+
+                // speed settings:
+                this.speed = 0.3;
+                this.turnSpeed = 0.5;
+                // spring constant settings:
+                this.m = 5;
+                this.k = 20;
+                this.b = 30;
+            }
+
+            backDirection() {
+                if (this.index === this.worm.skeleton.length-1) {
+                    return this.worm.skeleton[this.index-1].backDirection();
+                } else {
+                    return this.worm.skeleton[this.index + 1].position.clone().sub(
+                        this.position
+                        ).normalize();
+                }
+            }
+
+            rotateTowards(target, timeDelta) {
+                assert(this.index < (this.worm.skeleton.length -2));
+
+                const ring = this;
+                const prevRing = this.worm.skeleton[this.index + 1];
+
+                const direction = ring.backDirection().negate();
+                const idealDirection = target.clone().sub(prevRing.position);
+
+                const angle = axisAngle(direction, idealDirection, Zaxis);
+                const newPosition = rotateXY(
+                    ring.position,
+                    prevRing.position,
+                    angle * ring.turnSpeed * timeDelta
+                    );
+                ring.position = newPosition;
+            }
+
+            currentBend() {
+                assert(this.index < (this.worm.skeleton.length -2));
+
+                const ring = this;
+                const prevRing = this.worm.skeleton[this.index + 1];
+
+                const angle = axisAngle(
+                    ring.backDirection().negate(),
+                    prevRing.backDirection(),
+                    Zaxis
+                    );
+                return Math.abs(angle);
+            }
         }
-        // this.skel[0].velocity = V3(0.2, -0.3, 0);
+
+        for (let i=0; i<this.rings; i++) {
+            this.skeleton.push(new Ring(
+                this,
+                i,
+                // Start the skeleton in a straight line.
+                V3(0, i * this.segLength, 0)
+                )
+            );
+        }
+    }
+
+    // Update vertices based on ring positions:
+    updateVertices() {
+        const setVertex = (function(i, vertex) {
+            const vertices = this.wormMesh.geometry.vertices;
+            vertices[i].fromArray(vertex.toArray());
+        }).bind(this);
+
+        for (let ringIndex = 0; ringIndex < this.skeleton.length; ringIndex++) {
+            const ring = this.skeleton[ringIndex];
+
+            let needle = ring.position.clone().add(V3(0, 0, this.segHeight));
+
+            for (let j = 0; j < this.slices; j++) {
+                const vertex = needle.clone();
+
+                setVertex(ringIndex*12 + j, vertex);
+
+                const nextNeedle = needle.clone().sub(ring.position).applyAxisAngle(
+                    ring.backDirection(), rad(360/this.slices)
+                    ).add(
+                        ring.position
+                        )
+                needle = nextNeedle;
+            }
+        }
+        this.wormMesh.geometry.computeFaceNormals();
+        this.wormMesh.geometry.verticesNeedUpdate = true;
     }
 
     update() {
         const timeDelta = this.clock.getDelta();
 
-        const rotateXY = function(point, center, angle) {
-            return point.clone().add(
-                center.clone().negate()
-                ).applyAxisAngle(V3(0,0,1), angle).add(
-                    center
+        const wormTarget = this.target;
+
+        // Rotate segments towards target
+        let didBend = false;
+
+        for (let ringIndex = 0; ringIndex < this.skeleton.length-2; ringIndex++) {
+            const ring = this.skeleton[ringIndex];
+            if (!didBend && deg(ring.currentBend()) > 160) {
+                ring.rotateTowards(wormTarget, timeDelta);
+                didBend = true;
+            }
+        }
+        if (!didBend) {
+            let straightened = false;
+            for (let ringIndex = this.skeleton.length-1; ringIndex > 2; ringIndex--) {
+                const ring = this.skeleton[ringIndex];
+                const nextRing = this.skeleton[ringIndex - 1];
+                const nextNextRing = this.skeleton[ringIndex - 2];
+
+                const direction = nextRing.backDirection();
+                const idealDirection = nextNextRing.backDirection();
+
+                const angle = axisAngle(direction, idealDirection, Zaxis);
+                const newPosition = rotateXY(
+                    ring.position,
+                    nextRing.position,
+                    angle * ring.turnSpeed * 2 * timeDelta
                     );
-        }
-        const midPoint = function(p1, p2) {
-            return p1.clone().lerp(p2, 0.5);
-        }
-
-        const v = this.wormMesh.geometry.vertices;
-        const setVertex = function(i, vert) {
-            v[i].fromArray( vert.toArray() );
-        }
-
-        // Update Head (special case):
-        const head = this.skel[0];
-        let facing = head.direction.clone().negate();
-        const idealDirection = (this.target.clone().sub(head.position));
-        const distanceLeft = idealDirection.length();
-        const angleBetween = facing.angleTo(idealDirection);
-
-        const slow = ((5*distanceLeft)/(5*distanceLeft + 1));
-
-        if (angleBetween > 0) {
-            const cross = facing.clone().cross(idealDirection);
-            let toTurn = Math.min(angleBetween, head.turnSpeed);
-
-            if (this.rings > 1) {
-                const nextDirection = this.skel[1].direction;
-                const nextDirectionCross = nextDirection.clone().cross(head.direction);
-                console.log("angleTo: ", nextDirection.angleTo(head.direction));
-                if (nextDirection.angleTo(head.direction) > rad(10)) {
-                    toTurn = 0;
+                let check = true;
+                if (ringIndex < this.skeleton.length - 1) {
+                    if (deg(nextRing.currentBend()) < 150) {
+                        check = false;
+                    }
+                }
+                if (check && !straightened && angle > 0) {
+                    straightened = true;
+                    ring.position = newPosition;
                 }
             }
-
-            const newFacing = facing.clone().applyAxisAngle(
-                cross,
-                slow * toTurn * (0.5 * (1 + Math.cos(timeDelta/2)))
-                )
-            head.direction = newFacing.clone().negate();
         }
-        facing = head.direction.clone().negate();
-        head.velocity = facing.normalize().multiplyScalar(
-            slow * head.speed * timeDelta
-            );
-        head.position.add( head.velocity );
 
-        // console.log("Distance left: ",distanceLeft,", position: ",head.position.x,", ",head.position.y);
+        // Move head forward
+        const head = this.skeleton[0];
+        const direction = head.backDirection().negate();
 
-        // if (this.skel[0].position.y > -3) {
-        //     // this.skel[0].position.add( this.skel[0].velocity.clone().multiplyScalar(timeDelta) );
-        //     this.skel[0].direction.applyAxisAngle(V3(0,0,1), rad(timeDelta * 20 * Math.random()));
-        // } else {
-        //     this.skel[0].velocity = V3(0,0,0);
-        // }
+        head.velocity = direction.setLength(head.speed * timeDelta);
 
-        // Update rest of skeleton:
-        for (let ring = 1; ring < this.rings; ring++) {
-            const targetIndex = ring - 1;
-            assert(targetIndex >= 0);
-            const targetRing = this.skel[targetIndex];
+        const newHeadPosition = head.position.clone().add(head.velocity);
+        if (newHeadPosition.distanceTo(wormTarget) < head.position.distanceTo(wormTarget)) {
+            head.position = newHeadPosition;
+        }
 
-            const targetEndPos = targetRing.position.clone().add(
-                targetRing.direction.clone().setLength(
-                    this.segLength
-                    )
+        // Correct positions of other rings
+        for (let ringIndex = 1; ringIndex < this.skeleton.length; ringIndex++) {
+            const ring = this.skeleton[ringIndex];
+            const nextRing = this.skeleton[ringIndex - 1];
+
+            const idealPositionVector = nextRing.backDirection().setLength(
+                this.segLength
+                );
+            const idealPosition = nextRing.position.clone().add(
+                idealPositionVector
                 );
 
-            const alice = this.skel[ring];
             const bob = {
-                position: targetEndPos,
-                velocity: targetRing.velocity.clone(),
-                m: targetRing.m,
-                k: targetRing.k,
-                b: targetRing.b,
+                position: idealPosition,
+                velocity: nextRing.velocity.clone(),
+                m: nextRing.m,
+                k: nextRing.k,
+                b: nextRing.b,
             };
-
-            alice.velocity = this.springModel.updateVelocity(
-                alice, bob, timeDelta
-                );
-            alice.position = this.springModel.updatePosition(
-                alice, bob, timeDelta
-                );
-
-            const directionRay = new THREE.Ray(targetRing.position, targetRing.direction);
-            const rayTarget = directionRay.closestPointToPoint(alice.position);
-            const maxRayDist = 0.2;
-            if (alice.position.distanceTo(rayTarget) > maxRayDist) {
-                const newPos = alice.position.clone().lerp(
-                    rayTarget,
-                    (alice.position.distanceTo(rayTarget)-maxRayDist)/alice.position.distanceTo(rayTarget)
-                    )
-                alice.position = newPos;
-            }
-
-
-            const angleDiff = this.skel[ring].direction.angleTo(
-                this.skel[targetIndex].direction
-                );
-
-            const moveAngle = angleDiff * 0.75; // Math.pow(angleDiff, 10);
-
-            this.skel[ring].direction.applyAxisAngle(V3(0,0,1), angleDiff);
+            ring.velocity = this.springModel.updateVelocity(
+                ring, bob, timeDelta
+                )
+            ring.position = this.springModel.updatePosition(
+                ring, bob, timeDelta
+                )
         }
 
-        for (let ring=0; ring<this.rings; ring++) {
-            const skel = this.skel[ring];
-
-            let needle = skel.position.clone().add(V3(0, 0, this.segHeight));
-
-            for (let j = 0; j < this.slices; j++) {
-                const vert = needle.clone();
-
-                setVertex(ring*12 + j, vert);
-
-                const temp = needle.clone().sub(skel.position).applyAxisAngle(
-                    skel.direction, rad(360/this.slices)
-                    ).add(
-                        skel.position
-                        )
-                // needle.applyAxisAngle(skel.direction, rad(360/this.slices));
-                needle = temp;
-            }
-        }
-
-        this.wormMesh.geometry.computeFaceNormals();
-        this.wormMesh.geometry.verticesNeedUpdate = true;
+        this.updateVertices();
     }
 }

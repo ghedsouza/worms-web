@@ -33,3 +33,12 @@ The game code is all in `src` and written in [ES6](http://www.ecma-international
 - https://stemkoski.github.io/Three.js/ (has refraction example)
 - http://asciiflow.com/ (convert diagrams to ascii)
 - http://ghostinthecode.net/2016/08/17/fire.html (fire simulation guide)
+
+# Dev Notes
+
+## Console helpers
+Use THREE.js on http://threejs.org/examples/#canvas_lines.
+
+```
+function v3(a,b,c){ return new THREE.Vector3(a,b,c) }
+```

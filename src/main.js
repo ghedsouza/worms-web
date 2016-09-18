@@ -74,6 +74,8 @@ function run() {
     const worm1 = new worm.Worm();
     const wormB = new worm2.Worm();
 
+    window.worm = wormB;
+
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 10;
     pointLight.position.y = 50;
