@@ -53387,6 +53387,8 @@
 	    }
 	}
 
+	var Zaxis = (0, _utils.V3)(0, 0, 1);
+
 	// Calculate how many radians `v` would have to rotate towards `target` along
 	// `axis` so that it would be coincident with `target`.
 	//
@@ -53524,6 +53526,33 @@
 	                        return this.worm.skeleton[this.index + 1].position.clone().sub(this.position).normalize();
 	                    }
 	                }
+	            }, {
+	                key: 'rotateTowards',
+	                value: function rotateTowards(target, timeDelta) {
+	                    (0, _utils.assert)(this.index < this.worm.skeleton.length - 2);
+
+	                    var ring = this;
+	                    var prevRing = this.worm.skeleton[this.index + 1];
+
+	                    var direction = ring.backDirection().negate();
+	                    var idealDirection = target.clone().sub(prevRing.position);
+
+	                    var angle = axisAngle(direction, idealDirection, Zaxis);
+	                    var newPosition = rotateXY(ring.position, prevRing.position, angle * ring.turnSpeed * timeDelta);
+
+	                    ring.position = newPosition;
+	                }
+	            }, {
+	                key: 'currentBend',
+	                value: function currentBend() {
+	                    (0, _utils.assert)(this.index < this.worm.skeleton.length - 2);
+
+	                    var ring = this;
+	                    var prevRing = this.worm.skeleton[this.index + 1];
+
+	                    var angle = axisAngle(ring.backDirection().negate(), prevRing.backDirection(), Zaxis);
+	                    return Math.abs(angle);
+	                }
 	            }]);
 
 	            return Ring;
@@ -53569,8 +53598,17 @@
 	        value: function update() {
 	            var timeDelta = this.clock.getDelta();
 
-	            var Zaxis = (0, _utils.V3)(0, 0, 1);
 	            var wormTarget = this.target;
+
+	            // Rotate joints
+	            var didBend = false;
+	            for (var ringIndex = 0; ringIndex < this.skeleton.length - 2; ringIndex++) {
+	                var ring = this.skeleton[ringIndex];
+	                if (!didBend && (0, _utils.deg)(ring.currentBend()) > 170) {
+	                    ring.rotateTowards(wormTarget, timeDelta);
+	                    didBend = true;
+	                }
+	            }
 
 	            this.updateVertices();
 	        }

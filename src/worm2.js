@@ -25,6 +25,8 @@ function stopOnNaN(value) {
     }
 }
 
+const Zaxis = V3(0,0,1);
+
 // Calculate how many radians `v` would have to rotate towards `target` along
 // `axis` so that it would be coincident with `target`.
 //
@@ -164,6 +166,38 @@ export class Worm {
                         ).normalize();
                 }
             }
+
+            rotateTowards(target, timeDelta) {
+                assert(this.index < (this.worm.skeleton.length -2));
+
+                const ring = this;
+                const prevRing = this.worm.skeleton[this.index + 1];
+
+                const direction = ring.backDirection().negate();
+                const idealDirection = target.clone().sub(prevRing.position);
+
+                const angle = axisAngle(direction, idealDirection, Zaxis);
+                const newPosition = rotateXY(
+                    ring.position,
+                    prevRing.position, angle * ring.turnSpeed * timeDelta
+                    );
+
+                ring.position = newPosition;
+            }
+
+            currentBend() {
+                assert(this.index < (this.worm.skeleton.length -2));
+
+                const ring = this;
+                const prevRing = this.worm.skeleton[this.index + 1];
+
+                const angle = axisAngle(
+                    ring.backDirection().negate(),
+                    prevRing.backDirection(),
+                    Zaxis
+                    );
+                return Math.abs(angle);
+            }
         }
 
         for (let i=0; i<this.rings; i++) {
@@ -209,8 +243,17 @@ export class Worm {
     update() {
         const timeDelta = this.clock.getDelta();
 
-        const Zaxis = V3(0,0,1);
         const wormTarget = this.target;
+
+        // Rotate joints
+        let didBend = false;
+        for (let ringIndex = 0; ringIndex < this.skeleton.length-2; ringIndex++) {
+            const ring = this.skeleton[ringIndex];
+            if (!didBend && deg(ring.currentBend()) > 170) {
+                ring.rotateTowards(wormTarget, timeDelta);
+                didBend = true;
+            }
+        }
 
         this.updateVertices();
     }
