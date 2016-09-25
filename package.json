@@ -12,7 +12,7 @@
     "lint": "./node_modules/.bin/eslint src",
     "serve": "./node_modules/.bin/http-server -a localhost",
     "compile": "npm run babel && npm run webpack",
-    "babel": "./node_modules/.bin/babel src -d .bable-out",
+    "babel": "./node_modules/.bin/babel src -d .babel-out",
     "webpack": "./node_modules/.bin/webpack .babel-out/main.js out.js"
   },
   "author": "",

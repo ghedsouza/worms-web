@@ -26,7 +26,15 @@ textures from loading in the context of a local file.
 
 ### Project structure
 
-The game code is all in `src` and written in [ES6](http://www.ecma-international.org/ecma-262/6.0/ECMA-262.pdf). The build steps above use babel and webpack to convert all the ES6 code and node modules into a single browser-compatible ES5 file (`out.js`), which gets included in the shell HTML entrypoint file (`worms.html`). The code creates a single global function `window.run`, which gets executed in a script tag in `worms.html` to start the game.
+The game code is all in `src` and written in
+[ES6](http://www.ecma-international.org/ecma-262/6.0/ECMA-262.pdf).
+
+The build steps above use babel and webpack to convert all the ES6 code and
+node modules into a single browser-compatible ES5 file (`out.js`),
+which gets included in the shell HTML entrypoint file (`worms.html`).
+
+The code in `src/main.js` creates a single global function `window.run`,
+which gets executed in a script tag in `worms.html` to start the game.
 
 ## References:
 

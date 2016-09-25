@@ -4,6 +4,7 @@ import * as THREE from '../node_modules/three/build/three.js';
 
 export function assert(condition, message) {
     if (!condition) {
+        debugger;
         throw message || 'Assertion failed';
     }
 }

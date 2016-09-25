@@ -77,8 +77,8 @@ function run() {
     window.worm = wormB;
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
-    pointLight.position.x = 10;
-    pointLight.position.y = 50;
+    pointLight.position.x = 30;
+    pointLight.position.y = 0;
     pointLight.position.z = 130;
 
     scene.add(camera);

@@ -132,8 +132,8 @@
 	    window.worm = wormB;
 
 	    var pointLight = new THREE.PointLight(0xFFFFFF);
-	    pointLight.position.x = 10;
-	    pointLight.position.y = 50;
+	    pointLight.position.x = 30;
+	    pointLight.position.y = 0;
 	    pointLight.position.z = 130;
 
 	    scene.add(camera);
@@ -52986,6 +52986,7 @@
 
 	function assert(condition, message) {
 	    if (!condition) {
+	        debugger;
 	        throw message || 'Assertion failed';
 	    }
 	}
@@ -53387,7 +53388,24 @@
 	    }
 	}
 
+	var V3toString = function V3toString(v) {
+	    return 'V3(' + v.x + ', ' + v.y + ', ' + v.z + ')';
+	};
+
 	var Zaxis = (0, _utils.V3)(0, 0, 1);
+
+	var intersect = function intersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+	    // https://en.wikipedia.org/wiki/Line–line_intersection#Given_two_points_on_each_line
+	    var xNum = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+	    var xDen = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+	    var yNum = (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+	    var yDen = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+	    if (xDen === 0) {
+	        return undefined;
+	    }
+
+	    return (0, _utils.V3)(xNum / xDen, yNum / yDen, 0);
+	};
 
 	// Calculate how many radians `v` would have to rotate towards `target` along
 	// `axis` so that it would be coincident with `target`.
@@ -53458,10 +53476,11 @@
 	var wormMesh = exports.wormMesh = function wormMesh(segments, slices) {
 	    var geom = wormGeom(segments, slices);
 
-	    var wormMaterial = new THREE.MeshPhongMaterial({
+	    var wormMaterial = new THREE.MeshLambertMaterial({
 	        color: colors.silver,
 	        specular: 0x05aa05,
-	        shininess: 100
+	        shininess: 100,
+	        shading: THREE.SmoothShading
 	    });
 	    var meshFaceMaterial = new THREE.MeshFaceMaterial([wormMaterial]);
 
@@ -53487,11 +53506,11 @@
 	            }
 	        });
 
-	        this.target = (0, _utils.V3)(3, 3, 0);
+	        this.target = (0, _utils.V3)(3, -3, 0);
 
-	        this.segments = 3;
+	        this.segments = 8;
 	        this.rings = this.segments + 1;
-	        this.slices = 12;
+	        this.slices = 36;
 
 	        this.segHeight = 0.4;
 	        this.segLength = 2 / this.segments;
@@ -53510,11 +53529,11 @@
 	                this.velocity = (0, _utils.V3)(0, 0, 0);
 
 	                // speed settings:
-	                this.speed = 0.3;
-	                this.turnSpeed = 0.5;
+	                this.speed = 0.5;
+	                this.turnSpeed = 360 / 10;
 	                // spring constant settings:
 	                this.m = 5;
-	                this.k = 20;
+	                this.k = 200;
 	                this.b = 30;
 	            }
 
@@ -53528,6 +53547,11 @@
 	                    }
 	                }
 	            }, {
+	                key: 'clampedRotation',
+	                value: function clampedRotation(angle, timeDelta) {
+	                    return THREE.Math.clamp(angle, -(0, _utils.rad)(this.turnSpeed * timeDelta), (0, _utils.rad)(this.turnSpeed * timeDelta));
+	                }
+	            }, {
 	                key: 'rotateTowards',
 	                value: function rotateTowards(target, timeDelta) {
 	                    (0, _utils.assert)(this.index < this.worm.skeleton.length - 2);
@@ -53539,8 +53563,15 @@
 	                    var idealDirection = target.clone().sub(prevRing.position);
 
 	                    var angle = axisAngle(direction, idealDirection, Zaxis);
-	                    var newPosition = rotateXY(ring.position, prevRing.position, angle * ring.turnSpeed * timeDelta);
-	                    ring.position = newPosition;
+
+	                    var fulcrum = prevRing.position;
+
+	                    for (var i = this.index; i >= 0; i--) {
+	                        var ringToRotate = this.worm.skeleton[i];
+	                        var newPosition = rotateXY(ringToRotate.position, fulcrum, ringToRotate.clampedRotation(angle, timeDelta));
+	                        ringToRotate.position = newPosition;
+	                    }
+	                    return angle;
 	                }
 	            }, {
 	                key: 'currentBend',
@@ -53565,26 +53596,55 @@
 	        }
 	    }
 
-	    // Update vertices based on ring positions:
-
-
 	    _createClass(Worm, [{
+	        key: 'checkTarget',
+	        value: function checkTarget() {
+	            var reached = false;
+	            var headRay = new THREE.Ray(this.skeleton[1].position.clone(), this.skeleton[0].backDirection().negate().normalize());
+	            var closest = headRay.closestPointToPoint(this.target);
+	            console.log("Distance: " + closest.distanceTo(this.skeleton[1].position));
+	            if (closest.distanceTo(this.skeleton[1].position) <= this.segLength) {
+	                if (this.target.distanceTo(closest) < 0.1) {
+	                    reached = true;
+	                }
+	            }
+	            // if (
+	            //     closest.clone().sub(this.skeleton[1].position).length() <
+	            //     this.skeleton[0].backDirection().length()
+	            //     ) {
+	            //     if (this.target.distanceTo(closest) < 0.1) {
+	            //         reached = true;
+	            //     }
+	            // }
+
+	            if (reached || this.skeleton[0].position.distanceTo(this.target) < 0.1) {
+	                this.target = (0, _utils.V3)(-3 + Math.random() * 6, -3 + Math.random() * 6, 0);
+	                console.log("Target found! Next target: " + V3toString(this.target));
+	            }
+	        }
+
+	        // Update vertices based on ring positions:
+
+	    }, {
 	        key: 'updateVertices',
 	        value: function updateVertices() {
+	            var scaledTime = this.clock.elapsedTime * 2;
+
 	            var setVertex = function (i, vertex) {
 	                var vertices = this.wormMesh.geometry.vertices;
 	                vertices[i].fromArray(vertex.toArray());
 	            }.bind(this);
 
 	            for (var ringIndex = 0; ringIndex < this.skeleton.length; ringIndex++) {
+	                var sinX = scaledTime + ringIndex * Math.PI / 2;
 	                var ring = this.skeleton[ringIndex];
 
-	                var needle = ring.position.clone().add((0, _utils.V3)(0, 0, this.segHeight));
+	                var needle = ring.position.clone().add((0, _utils.V3)(0, 0, this.segHeight * (ringIndex == 0 ? 0.8 : 1) + Math.sin(sinX) * 0.02));
 
 	                for (var j = 0; j < this.slices; j++) {
 	                    var vertex = needle.clone();
 
-	                    setVertex(ringIndex * 12 + j, vertex);
+	                    setVertex(ringIndex * this.slices + j, vertex);
 
 	                    var nextNeedle = needle.clone().sub(ring.position).applyAxisAngle(ring.backDirection(), (0, _utils.rad)(360 / this.slices)).add(ring.position);
 	                    needle = nextNeedle;
@@ -53598,42 +53658,86 @@
 	        value: function update() {
 	            var timeDelta = this.clock.getDelta();
 
+	            this.checkTarget();
 	            var wormTarget = this.target;
+
+	            var prevHeadPosition = this.skeleton[0].position.clone();
 
 	            // Rotate segments towards target
 	            var didBend = false;
+	            var completelyBent = true;
 
 	            for (var ringIndex = 0; ringIndex < this.skeleton.length - 2; ringIndex++) {
 	                var ring = this.skeleton[ringIndex];
-	                if (!didBend && (0, _utils.deg)(ring.currentBend()) > 160) {
-	                    ring.rotateTowards(wormTarget, timeDelta);
-	                    didBend = true;
-	                }
-	            }
-	            if (!didBend) {
-	                var straightened = false;
-	                for (var _ringIndex = this.skeleton.length - 1; _ringIndex > 2; _ringIndex--) {
-	                    var _ring = this.skeleton[_ringIndex];
-	                    var nextRing = this.skeleton[_ringIndex - 1];
-	                    var nextNextRing = this.skeleton[_ringIndex - 2];
-
-	                    var _direction = nextRing.backDirection();
-	                    var idealDirection = nextNextRing.backDirection();
-
-	                    var angle = axisAngle(_direction, idealDirection, Zaxis);
-	                    var newPosition = rotateXY(_ring.position, nextRing.position, angle * _ring.turnSpeed * 2 * timeDelta);
-	                    var check = true;
-	                    if (_ringIndex < this.skeleton.length - 1) {
-	                        if ((0, _utils.deg)(nextRing.currentBend()) < 150) {
-	                            check = false;
-	                        }
-	                    }
-	                    if (check && !straightened && angle > 0) {
-	                        straightened = true;
-	                        _ring.position = newPosition;
+	                var maxed = (0, _utils.deg)(ring.currentBend()) < 160;
+	                completelyBent = completelyBent && maxed;
+	                if (!didBend && !maxed) {
+	                    var angle = ring.rotateTowards(wormTarget, timeDelta);
+	                    if (true) {
+	                        didBend = true;
+	                        console.log("Bent at " + ringIndex + ", " + angle);
 	                    }
 	                }
 	            }
+	            if (completelyBent) {
+	                var segment0 = this.skeleton[0].backDirection();
+	                var segment1 = this.skeleton[1].backDirection();
+
+	                var perp0 = (0, _utils.V3)(-segment0.y, segment0.x, 0);
+	                var perp1 = (0, _utils.V3)(-segment1.y, segment1.x, 0);
+
+	                var mid0 = midPoint(this.skeleton[0].position, this.skeleton[1].position);
+	                var mid1 = midPoint(this.skeleton[1].position, this.skeleton[2].position);
+
+	                var mid0_2 = mid0.clone().add(perp0);
+	                var mid1_2 = mid1.clone().add(perp1);
+
+	                var fulcrum = intersect(mid0.x, mid0.y, mid0_2.x, mid0_2.y, mid1.x, mid1.y, mid1_2.x, mid1_2.y);
+	                var forwardsAngle = axisAngle(fulcrum.clone().sub(this.skeleton[1].position), fulcrum.clone().sub(this.skeleton[0].position), Zaxis);
+	                if (fulcrum) {
+	                    var radius = fulcrum.clone().sub(this.skeleton[0].position).length();
+	                    // assert(radius > 2);
+	                    // assert(radius < 3);
+
+	                    console.log("Rotate: " + radius);
+
+	                    for (var _ringIndex = 0; _ringIndex < this.skeleton.length; _ringIndex++) {
+	                        this.skeleton[_ringIndex].position = rotateXY(this.skeleton[_ringIndex].position, fulcrum, Math.sign(forwardsAngle) * (0, _utils.rad)(this.skeleton[0].turnSpeed * timeDelta));
+	                    }
+	                }
+	            }
+
+	            // if (!didBend) {
+	            //     let straightened = false;
+	            //     for (let ringIndex = this.skeleton.length-1; ringIndex >= 3; ringIndex--) {
+	            //         const ring = this.skeleton[ringIndex];
+	            //         const nextRing = this.skeleton[ringIndex - 1];
+	            //         const nextNextRing = this.skeleton[ringIndex - 2];
+
+	            //         const direction = nextRing.backDirection();
+	            //         const idealDirection = nextNextRing.backDirection();
+
+	            //         const angle = axisAngle(direction, idealDirection, Zaxis);
+	            //         const toTurn = ring.clampedRotation(angle, timeDelta);
+	            //         const newPosition = rotateXY(
+	            //             ring.position,
+	            //             nextRing.position,
+	            //             ring.clampedRotation(angle, timeDelta)
+	            //             );
+	            //         let check = true;
+	            //         if (ringIndex < this.skeleton.length - 1) {
+	            //             if (deg(nextRing.currentBend()) < 150) {
+	            //                 check = false;
+	            //             }
+	            //         }
+	            //         console.log(`st ${ringIndex}: angle: ${angle} (${V3toString(direction)}, ${V3toString(idealDirection)})`);
+	            //         if (check && !straightened && Math.abs(deg(angle)) > 0) {
+	            //             straightened = true;
+	            //             ring.position = newPosition;
+	            //             console.log("Straigtened at " + ringIndex + ", : " + Math.abs(deg(angle)));
+	            //         }
+	            //     }
+	            // }
 
 	            // Move head forward
 	            var head = this.skeleton[0];
@@ -53644,25 +53748,36 @@
 	            var newHeadPosition = head.position.clone().add(head.velocity);
 	            if (newHeadPosition.distanceTo(wormTarget) < head.position.distanceTo(wormTarget)) {
 	                head.position = newHeadPosition;
+	                console.log("Moving head to " + V3toString(newHeadPosition));
+	            } else {
+	                console.log("Stuck");
 	            }
+
+	            head.velocity = head.position.clone().sub(prevHeadPosition);
 
 	            // Correct positions of other rings
 	            for (var _ringIndex2 = 1; _ringIndex2 < this.skeleton.length; _ringIndex2++) {
-	                var _ring2 = this.skeleton[_ringIndex2];
-	                var _nextRing = this.skeleton[_ringIndex2 - 1];
+	                var _ring = this.skeleton[_ringIndex2];
+	                var nextRing = this.skeleton[_ringIndex2 - 1];
 
-	                var idealPositionVector = _nextRing.backDirection().setLength(this.segLength);
-	                var idealPosition = _nextRing.position.clone().add(idealPositionVector);
+	                var idealPositionVector = nextRing.backDirection().setLength(this.segLength);
+	                var idealPosition = nextRing.position.clone().add(idealPositionVector);
 
-	                var bob = {
-	                    position: idealPosition,
-	                    velocity: _nextRing.velocity.clone(),
-	                    m: _nextRing.m,
-	                    k: _nextRing.k,
-	                    b: _nextRing.b
-	                };
-	                _ring2.velocity = this.springModel.updateVelocity(_ring2, bob, timeDelta);
-	                _ring2.position = this.springModel.updatePosition(_ring2, bob, timeDelta);
+	                _ring.position = idealPosition;
+
+	                // const bob = {
+	                //     position: idealPosition,
+	                //     velocity: nextRing.velocity.clone(),
+	                //     m: nextRing.m,
+	                //     k: nextRing.k,
+	                //     b: nextRing.b,
+	                // };
+	                // ring.velocity = this.springModel.updateVelocity(
+	                //     ring, bob, timeDelta
+	                //     )
+	                // ring.position = this.springModel.updatePosition(
+	                //     ring, bob, timeDelta
+	                //     )
 	            }
 
 	            this.updateVertices();
