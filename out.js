@@ -52974,6 +52974,7 @@
 	exports.F3 = F3;
 	exports.V3 = V3;
 	exports.V2 = V2;
+	exports.V3toString = V3toString;
 	exports.letter_index = letter_index;
 
 	var _three = __webpack_require__(2);
@@ -52982,7 +52983,9 @@
 
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-	// Debug
+	/******************
+	*    Debug
+	*******************/
 
 	function assert(condition, message) {
 	    if (!condition) {
@@ -52991,14 +52994,24 @@
 	    }
 	}
 
-	// Time
+	function stopOnNaN(value) {
+	    if (isNaN(value)) {
+	        debugger;
+	    }
+	}
 
-	// Return current time in seconds.
+	/******************
+	*    Time
+	*******************/
+
+	/** Return current time in seconds. */
 	function time() {
 	    return Date.now() / 1000;
 	}
 
-	// Math
+	/******************
+	*    Math
+	*******************/
 
 	function rad(deg) {
 	    return deg * Math.PI / 180;
@@ -53008,7 +53021,9 @@
 	    return rad * 180 / Math.PI;
 	}
 
-	// Three.js helpers
+	/************************
+	*    Three.js helpers
+	*************************/
 
 	function F3(i, j, k) {
 	    return new THREE.Face3(i, j, k);
@@ -53022,7 +53037,13 @@
 	    return new THREE.Vector2(x, y);
 	}
 
-	// Strings
+	function V3toString(v) {
+	    return 'V3(' + v.x + ', ' + v.y + ', ' + v.z + ')';
+	}
+
+	/******************
+	*    Math
+	*******************/
 
 	function letter_index(letter) {
 	    assert(letter.length === 1);
@@ -53378,20 +53399,6 @@
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	//******************************
-	// Helper functions
-	//******************************
-
-	function stopOnNaN(value) {
-	    if (isNaN(value)) {
-	        debugger;
-	    }
-	}
-
-	var V3toString = function V3toString(v) {
-	    return 'V3(' + v.x + ', ' + v.y + ', ' + v.z + ')';
-	};
-
 	var Zaxis = (0, _utils.V3)(0, 0, 1);
 
 	var intersect = function intersect(x1, y1, x2, y2, x3, y3, x4, y4) {
@@ -53619,7 +53626,7 @@
 
 	            if (reached || this.skeleton[0].position.distanceTo(this.target) < 0.1) {
 	                this.target = (0, _utils.V3)(-3 + Math.random() * 6, -3 + Math.random() * 6, 0);
-	                console.log("Target found! Next target: " + V3toString(this.target));
+	                console.log("Target found! Next target: " + (0, _utils.V3toString)(this.target));
 	            }
 	        }
 
@@ -53748,7 +53755,7 @@
 	            var newHeadPosition = head.position.clone().add(head.velocity);
 	            if (newHeadPosition.distanceTo(wormTarget) < head.position.distanceTo(wormTarget)) {
 	                head.position = newHeadPosition;
-	                console.log("Moving head to " + V3toString(newHeadPosition));
+	                console.log("Moving head to " + (0, _utils.V3toString)(newHeadPosition));
 	            } else {
 	                console.log("Stuck");
 	            }

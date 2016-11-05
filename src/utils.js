@@ -1,6 +1,9 @@
 import * as THREE from '../node_modules/three/build/three.js';
 
-// Debug
+
+/******************
+*    Debug
+*******************/
 
 export function assert(condition, message) {
     if (!condition) {
@@ -9,14 +12,26 @@ export function assert(condition, message) {
     }
 }
 
-// Time
+function stopOnNaN(value) {
+    if (isNaN(value)) {
+        debugger;
+    }
+}
 
-// Return current time in seconds.
+
+/******************
+*    Time
+*******************/
+
+/** Return current time in seconds. */
 export function time() {
     return Date.now()/1000;
 }
 
-// Math
+
+/******************
+*    Math
+*******************/
 
 export function rad(deg) {
     return deg * Math.PI / 180;
@@ -26,7 +41,10 @@ export function deg(rad) {
     return rad * 180 / Math.PI;
 }
 
-// Three.js helpers
+
+/************************
+*    Three.js helpers
+*************************/
 
 export function F3(i, j, k) {
     return new THREE.Face3(i, j, k);
@@ -40,7 +58,14 @@ export function V2(x,y) {
     return new THREE.Vector2(x,y);
 }
 
-// Strings
+export function V3toString(v) {
+    return `V3(${v.x}, ${v.y}, ${v.z})`;
+}
+
+
+/******************
+*    Math
+*******************/
 
 export function letter_index(letter) {
     assert(letter.length === 1);

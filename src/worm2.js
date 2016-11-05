@@ -10,24 +10,11 @@ import {
     V3,
     V2,
     time,
+    stopOnNan,
+    V3toString,
 } from './utils';
 import * as colors from './colors';
 import * as spring from './physics/spring';
-
-
-//******************************
-// Helper functions
-//******************************
-
-function stopOnNaN(value) {
-    if (isNaN(value)) {
-        debugger;
-    }
-}
-
-const V3toString = function(v) {
-    return `V3(${v.x}, ${v.y}, ${v.z})`;
-};
 
 
 const Zaxis = V3(0,0,1);
