@@ -8,3 +8,4 @@ export const red = new THREE.Color( 0xF15B29 );
 export const blue = new THREE.Color( 0x1877AB );
 export const silver = new THREE.Color( 0xe6e6e6 );
 export const wood = new THREE.Color( 0x997300 );
+export const sand = new THREE.Color( 0x999999 );

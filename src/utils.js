@@ -12,12 +12,11 @@ export function assert(condition, message) {
     }
 }
 
-function stopOnNaN(value) {
+export function stopOnNaN(value) {
     if (isNaN(value)) {
         debugger;
     }
 }
-
 
 /******************
 *    Time
@@ -62,9 +61,13 @@ export function V3toString(v) {
     return `V3(${v.x}, ${v.y}, ${v.z})`;
 }
 
+export function midPoint(p1, p2) {
+    return p1.clone().lerp(p2, 0.5);
+}
+
 
 /******************
-*    Math
+*    Strings
 *******************/
 
 export function letter_index(letter) {

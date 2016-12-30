@@ -14,13 +14,14 @@ import {
 import * as glass from './glass';
 import * as ground from './ground';
 import * as worm from './worm';
-import * as worm2 from './worm2';
 
+
+const $container = $('#container');
+const $debug = $('#debug');
 
 const mousePos = V2(0,0);
 
-function onDocumentMouseMove( event )
-{
+function onDocumentMouseMove(event) {
     // the following line would stop any other event handler from firing
     // (such as the mouse's TrackballControls)
     // event.preventDefault();
@@ -37,9 +38,6 @@ const t = function() {
 
 
 function run() {
-    const $container = $('#container');
-    const $debug = $('#debug');
-
     // set the scene size
     var WIDTH = 500,
         HEIGHT = 500;
@@ -70,11 +68,9 @@ function run() {
 
     const mag_glass = glass.glass();
     const surface = ground.surface();
-    const wormModel = worm.wormTest();
     const worm1 = new worm.Worm();
-    const wormB = new worm2.Worm();
 
-    window.worm = wormB;
+    window.worm1 = worm1;
 
     const pointLight = new THREE.PointLight( 0xFFFFFF );
     pointLight.position.x = 30;
@@ -85,9 +81,7 @@ function run() {
     scene.add(pointLight);
     scene.add(surface);
     scene.add(mag_glass);
-    // scene.add(wormModel);
-    // scene.add(worm1.wormMesh);
-    scene.add(wormB.wormMesh);
+    scene.add(worm1.wormMesh);
 
     const stats = new Stats();
     stats.showPanel(0);
@@ -96,8 +90,25 @@ function run() {
     // when the mouse moves, call the given function
     document.addEventListener('mousemove', onDocumentMouseMove, false );
 
+    const spotLight = new THREE.SpotLight(0xFF0000);
+    spotLight.position.set(0,0,3);
+    spotLight.castShadow = true;
+    spotLight.shadow.mapSize.width = 1024
+    spotLight.shadow.mapSize.height = 1024
+    spotLight.angle = rad(10);
+    spotLight.penumbra = 0.5;
+
+    const spotlightTarget = {
+        position: V3(0,1,0),
+    };
+    spotLight.target.position.set(1, 1, 0);
+
+    scene.add(spotLight);
+    // scene.add(spotlightTarget);
+
     function animate() {
         stats.begin();
+        spotLight.target.updateMatrixWorld();
         const xPercentage = mousePos.x / 500;
         const yPercentage = (500-mousePos.y) / 500;
 
@@ -109,14 +120,7 @@ function run() {
 
         // $debug.html('t: ' + t() + ', x: ' + mousePos.x + ', y: ' + mousePos.y);
 
-        const worm_t = t()/5;
-        wormModel.position.set(
-            worm_t, Math.sin(worm_t), 0
-            );
-        wormModel.rotation.z = Math.cos(worm_t) + rad(90);
-
         worm1.update();
-        wormB.update();
 
         mag_glass.position.set(
             xMagPos, yMagPos, 3
