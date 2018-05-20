@@ -1,5 +1,5 @@
-import $ from '../node_modules/jquery/dist/jquery.js';
-import * as THREE from '../node_modules/three/build/three.js';
+import $ from "../node_modules/jquery/dist/jquery.js";
+import * as THREE from "../node_modules/three/build/three.js";
 
 import {
     assert,
@@ -12,36 +12,27 @@ import {
     time,
     V2,
     V3,
-    V3toString,
-} from './utils';
-import * as colors from './colors';
-import * as spring from './physics/spring';
+    V3toString
+} from "./utils";
+import * as colors from "./colors";
+import * as spring from "./physics/spring";
 
-
-const Zaxis = V3(0,0,1);
-
+const Zaxis = V3(0, 0, 1);
 
 const intersect = function(x1, y1, x2, y2, x3, y3, x4, y4) {
     // https://en.wikipedia.org/wiki/Line–line_intersection#Given_two_points_on_each_line
-    const xNum = (
-        (x1*y2 - y1*x2)*(x3-x4) - (x1-x2)*(x3*y4 - y3*x4)
-        );
-    const xDen = (
-        (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
-        );
-    const yNum = (
-        (x1*y2 - y1*x2)*(y3-y4) - (y1-y2)*(x3*y4 - y3*x4)
-        );
-    const yDen = (
-        (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
-        );
+    const xNum =
+        (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4);
+    const xDen = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    const yNum =
+        (x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4);
+    const yDen = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
     if (xDen === 0) {
         return undefined;
     }
 
-    return V3(xNum/xDen, yNum/yDen, 0);
-}
-
+    return V3(xNum / xDen, yNum / yDen, 0);
+};
 
 // Calculate how many radians `v` would have to rotate towards `target` along
 // `axis` so that it would be coincident with `target`.
@@ -62,13 +53,12 @@ const axisAngle = function(v, target, axis) {
 // Assume point and center are on the XY plane
 // Rotate point around center on the XY plane
 const rotateXY = function(point, center, angle) {
-    return point.clone().add(
-        center.clone().negate()
-        ).applyAxisAngle(V3(0,0,1), angle).add(
-            center
-            );
+    return point
+        .clone()
+        .add(center.clone().negate())
+        .applyAxisAngle(V3(0, 0, 1), angle)
+        .add(center);
 };
-
 
 //******************************
 // Worm model
@@ -79,7 +69,7 @@ export const wormGeom = function(segments, slices) {
 
     // Vertex locations (dynamic)
     // These will get updated as the worm moves.
-    for (let i = 0; i < (segments+1); i++) {
+    for (let i = 0; i < segments + 1; i++) {
         for (let j = 0; j < slices; j++) {
             geom.vertices.push(V3());
         }
@@ -94,21 +84,21 @@ export const wormGeom = function(segments, slices) {
             const b = start + (j + 1) % slices;
             const c = a + slices;
             const d = b + slices;
-            geom.faces.push(F3(a,b,d));
-            geom.faces.push(F3(a,d,c));
+            geom.faces.push(F3(a, b, d));
+            geom.faces.push(F3(a, d, c));
         }
     }
 
     function cap(start) {
-        for(let i=1; i<slices-1; i++) {
-            geom.faces.push(F3(start, start+i, start+i+1));
-            geom.faces.push(F3(start, start+i+1, start+i));
+        for (let i = 1; i < slices - 1; i++) {
+            geom.faces.push(F3(start, start + i, start + i + 1));
+            geom.faces.push(F3(start, start + i + 1, start + i));
         }
     }
     cap(0);
     cap(slices * segments);
     return geom;
-}
+};
 
 export const wormMesh = function(segments, slices) {
     const geom = wormGeom(segments, slices);
@@ -117,9 +107,9 @@ export const wormMesh = function(segments, slices) {
         color: colors.silver,
         specular: 0x05aa05,
         shininess: 100,
-        shading: THREE.SmoothShading,
+        shading: THREE.SmoothShading
     });
-    const meshFaceMaterial = new THREE.MeshFaceMaterial( [ wormMaterial ] );
+    const meshFaceMaterial = new THREE.MeshFaceMaterial([wormMaterial]);
 
     geom.computeFaceNormals();
     for (const face in geom.faces) {
@@ -127,8 +117,7 @@ export const wormMesh = function(segments, slices) {
     }
     const mesh = new THREE.Mesh(geom, meshFaceMaterial);
     return mesh;
-}
-
+};
 
 export class Worm {
     constructor() {
@@ -138,18 +127,18 @@ export class Worm {
             c: 100,
             maxDistance: 2,
             environment: {
-                heat: 0.0,
-            },
+                heat: 0.0
+            }
         });
 
         this.target = V3(3, -3, 0);
 
         this.segments = 8;
         this.rings = this.segments + 1;
-        this.slices = 36;
+        this.slices = 40;
 
         this.segHeight = 0.4;
-        this.segLength = 2/this.segments;
+        this.segLength = 2 / this.segments;
 
         this.wormMesh = wormMesh(this.segments, this.slices);
 
@@ -160,11 +149,11 @@ export class Worm {
                 this.worm = worm;
                 this.index = index;
                 this.position = position;
-                this.velocity = V3(0,0,0);
+                this.velocity = V3(0, 0, 0);
 
                 // speed settings:
                 this.speed = 0.5;
-                this.turnSpeed = 360/10;
+                this.turnSpeed = 360 / 10;
                 // spring constant settings:
                 this.m = 5;
                 this.k = 200;
@@ -172,12 +161,13 @@ export class Worm {
             }
 
             backDirection() {
-                if (this.index === this.worm.skeleton.length-1) {
-                    return this.worm.skeleton[this.index-1].backDirection();
+                if (this.index === this.worm.skeleton.length - 1) {
+                    return this.worm.skeleton[this.index - 1].backDirection();
                 } else {
-                    return this.worm.skeleton[this.index + 1].position.clone().sub(
-                        this.position
-                        ).normalize();
+                    return this.worm.skeleton[this.index + 1].position
+                        .clone()
+                        .sub(this.position)
+                        .normalize();
                 }
             }
 
@@ -186,11 +176,11 @@ export class Worm {
                     angle,
                     -rad(this.turnSpeed * timeDelta),
                     rad(this.turnSpeed * timeDelta)
-                    );
+                );
             }
 
             rotateTowards(target, timeDelta) {
-                assert(this.index < (this.worm.skeleton.length -2));
+                assert(this.index < this.worm.skeleton.length - 2);
 
                 const ring = this;
                 const prevRing = this.worm.skeleton[this.index + 1];
@@ -202,7 +192,7 @@ export class Worm {
 
                 const fulcrum = prevRing.position;
 
-                for (let i=this.index; i >= 0; i--) {
+                for (let i = this.index; i >= 0; i--) {
                     const ringToRotate = this.worm.skeleton[i];
                     const newPosition = rotateXY(
                         ringToRotate.position,
@@ -215,7 +205,7 @@ export class Worm {
             }
 
             currentBend() {
-                assert(this.index < (this.worm.skeleton.length -2));
+                assert(this.index < this.worm.skeleton.length - 2);
 
                 const ring = this;
                 const prevRing = this.worm.skeleton[this.index + 1];
@@ -224,17 +214,18 @@ export class Worm {
                     ring.backDirection().negate(),
                     prevRing.backDirection(),
                     Zaxis
-                    );
+                );
                 return Math.abs(angle);
             }
         }
 
-        for (let i=0; i<this.rings; i++) {
-            this.skeleton.push(new Ring(
-                this,
-                i,
-                // Start the skeleton in a straight line.
-                V3(0, i * this.segLength, 0)
+        for (let i = 0; i < this.rings; i++) {
+            this.skeleton.push(
+                new Ring(
+                    this,
+                    i,
+                    // Start the skeleton in a straight line.
+                    V3(0, i * this.segLength, 0)
                 )
             );
         }
@@ -245,8 +236,11 @@ export class Worm {
 
         const headRay = new THREE.Ray(
             this.skeleton[1].position.clone(),
-            this.skeleton[0].backDirection().negate().normalize()
-            );
+            this.skeleton[0]
+                .backDirection()
+                .negate()
+                .normalize()
+        );
         const closest = headRay.closestPointToPoint(this.target);
         // console.log("Distance: " + closest.distanceTo(this.skeleton[1].position));
         if (closest.distanceTo(this.skeleton[1].position) <= this.segLength) {
@@ -255,12 +249,11 @@ export class Worm {
             }
         }
 
-        if (reached || this.skeleton[0].position.distanceTo(this.target) < 0.1) {
-            this.target = V3(
-                -3 + (Math.random() * 6),
-                -3 + (Math.random() * 6),
-                0
-                )
+        if (
+            reached ||
+            this.skeleton[0].position.distanceTo(this.target) < 0.1
+        ) {
+            this.target = V3(-3 + Math.random() * 6, -3 + Math.random() * 6, 0);
             // console.log("Target found! Next target: " + V3toString(this.target));
         }
     }
@@ -269,31 +262,39 @@ export class Worm {
     updateVertices() {
         const scaledTime = this.clock.elapsedTime * 2;
 
-        const setVertex = (function(i, vertex) {
+        const setVertex = function(i, vertex) {
             const vertices = this.wormMesh.geometry.vertices;
             vertices[i].fromArray(vertex.toArray());
-        }).bind(this);
+        }.bind(this);
 
         for (let ringIndex = 0; ringIndex < this.skeleton.length; ringIndex++) {
             const sinX = scaledTime + ringIndex * Math.PI / 2;
             const ring = this.skeleton[ringIndex];
 
-            let needle = ring.position.clone().add(V3(
-                0,
-                0,
-                this.segHeight * (ringIndex == 0 ? 0.8 : 1) + (Math.sin(sinX) * 0.02)
-                ));
+            let needle = ring.position
+                .clone()
+                .add(
+                    V3(
+                        0,
+                        0,
+                        this.segHeight * (ringIndex == 0 ? 0.8 : 1) +
+                            Math.sin(sinX) * 0.02
+                    )
+                );
 
             for (let j = 0; j < this.slices; j++) {
                 const vertex = needle.clone();
 
-                setVertex(ringIndex*this.slices + j, vertex);
+                setVertex(ringIndex * this.slices + j, vertex);
 
-                const nextNeedle = needle.clone().sub(ring.position).applyAxisAngle(
-                    ring.backDirection(), rad(360/this.slices)
-                    ).add(
-                        ring.position
-                        )
+                const nextNeedle = needle
+                    .clone()
+                    .sub(ring.position)
+                    .applyAxisAngle(
+                        ring.backDirection(),
+                        rad(360 / this.slices)
+                    )
+                    .add(ring.position);
                 needle = nextNeedle;
             }
         }
@@ -313,7 +314,11 @@ export class Worm {
         let didBend = false;
         let completelyBent = true;
 
-        for (let ringIndex = 0; ringIndex < this.skeleton.length-2; ringIndex++) {
+        for (
+            let ringIndex = 0;
+            ringIndex < this.skeleton.length - 2;
+            ringIndex++
+        ) {
             const ring = this.skeleton[ringIndex];
             const maxed = deg(ring.currentBend()) < 160;
             completelyBent = completelyBent && maxed;
@@ -325,49 +330,64 @@ export class Worm {
                 }
             }
         }
-        if (completelyBent)
-        {
+        if (completelyBent) {
             const segment0 = this.skeleton[0].backDirection();
             const segment1 = this.skeleton[1].backDirection();
 
             const perp0 = V3(-segment0.y, segment0.x, 0);
             const perp1 = V3(-segment1.y, segment1.x, 0);
 
-            const mid0 = midPoint(this.skeleton[0].position, this.skeleton[1].position);
-            const mid1 = midPoint(this.skeleton[1].position, this.skeleton[2].position);
+            const mid0 = midPoint(
+                this.skeleton[0].position,
+                this.skeleton[1].position
+            );
+            const mid1 = midPoint(
+                this.skeleton[1].position,
+                this.skeleton[2].position
+            );
 
             const mid0_2 = mid0.clone().add(perp0);
             const mid1_2 = mid1.clone().add(perp1);
 
             const fulcrum = intersect(
-                mid0.x, mid0.y,
-                mid0_2.x, mid0_2.y,
-                mid1.x, mid1.y,
-                mid1_2.x, mid1_2.y
-                );
+                mid0.x,
+                mid0.y,
+                mid0_2.x,
+                mid0_2.y,
+                mid1.x,
+                mid1.y,
+                mid1_2.x,
+                mid1_2.y
+            );
             const forwardsAngle = axisAngle(
                 fulcrum.clone().sub(this.skeleton[1].position),
                 fulcrum.clone().sub(this.skeleton[0].position),
                 Zaxis
-                )
+            );
             if (fulcrum) {
-                const radius = (fulcrum.clone().sub(this.skeleton[0].position).length());
+                const radius = fulcrum
+                    .clone()
+                    .sub(this.skeleton[0].position)
+                    .length();
                 // assert(radius > 2);
                 // assert(radius < 3);
 
                 // console.log("Rotate: " +  radius);
 
-                for (let ringIndex = 0; ringIndex < this.skeleton.length; ringIndex++)
-                {
+                for (
+                    let ringIndex = 0;
+                    ringIndex < this.skeleton.length;
+                    ringIndex++
+                ) {
                     this.skeleton[ringIndex].position = rotateXY(
                         this.skeleton[ringIndex].position,
                         fulcrum,
-                        Math.sign(forwardsAngle) * rad(this.skeleton[0].turnSpeed * timeDelta)
-                        );
+                        Math.sign(forwardsAngle) *
+                            rad(this.skeleton[0].turnSpeed * timeDelta)
+                    );
                 }
             }
         }
-
 
         // if (!didBend) {
         //     let straightened = false;
@@ -408,7 +428,10 @@ export class Worm {
         head.velocity = direction.setLength(head.speed * timeDelta);
 
         const newHeadPosition = head.position.clone().add(head.velocity);
-        if (newHeadPosition.distanceTo(wormTarget) < head.position.distanceTo(wormTarget)) {
+        if (
+            newHeadPosition.distanceTo(wormTarget) <
+            head.position.distanceTo(wormTarget)
+        ) {
             head.position = newHeadPosition;
             // console.log("Moving head to " + V3toString(newHeadPosition));
         } else {
@@ -422,12 +445,12 @@ export class Worm {
             const ring = this.skeleton[ringIndex];
             const nextRing = this.skeleton[ringIndex - 1];
 
-            const idealPositionVector = nextRing.backDirection().setLength(
-                this.segLength
-                );
-            const idealPosition = nextRing.position.clone().add(
-                idealPositionVector
-                );
+            const idealPositionVector = nextRing
+                .backDirection()
+                .setLength(this.segLength);
+            const idealPosition = nextRing.position
+                .clone()
+                .add(idealPositionVector);
 
             ring.position = idealPosition;
 
@@ -444,7 +467,6 @@ export class Worm {
             // ring.position = this.springModel.updatePosition(
             //     ring, bob, timeDelta
             //     )
-
         }
 
         this.updateVertices();
