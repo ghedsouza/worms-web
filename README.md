@@ -47,6 +47,9 @@ which gets executed in a script tag in `worms.html` to start the game.
 ## Console helpers
 Use THREE.js on http://threejs.org/examples/#canvas_lines.
 
+## Blogs
+https://phoboslab.org/log/2018/09/underrun-making-of
+
 ```
 function v3(a,b,c){ return new THREE.Vector3(a,b,c) }
 ```
