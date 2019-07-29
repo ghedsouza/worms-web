@@ -11,6 +11,11 @@ You can get both by installing the latest node from https://nodejs.org/en/.
 
 ### Build steps:
 
+New:
+- Run `./node_modules/.bin/webpack --watch`
+
+Old:
+
 - Run `npm install` to install dependencies.
 - Run `npm run compile` to build `out.js` from the current `src`
   (or, if you have bash, `./compile` is a bit faster).
